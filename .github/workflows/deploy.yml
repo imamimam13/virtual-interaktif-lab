@@ -26,4 +26,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: imamimam13/virtual-interaktif-lab:latest
+          tags: imamwb/virtual-interaktif-lab:latest

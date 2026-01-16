@@ -4,7 +4,7 @@ services:
   app:
     container_name: virtual-lab-prod
     # Pull from Docker Hub instead of building locally
-    image: imamimam13/virtual-interaktif-lab:latest
+    image: imamwb/virtual-interaktif-lab:latest
     restart: always
     ports:
       - "8795:3000"
