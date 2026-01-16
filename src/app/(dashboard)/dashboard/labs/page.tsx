@@ -12,7 +12,7 @@ import { redirect } from "next/navigation";
 export default async function LabsPage({
     searchParams,
 }: {
-    searchParams: { view?: string };
+    searchParams: Promise<{ view?: string }>;
 }) {
     const resolvedSearchParams = await searchParams;
     const session = await getServerSession(authOptions);
