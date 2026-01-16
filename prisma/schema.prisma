@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+
+// SQLite compatibility: Enums removed
+
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String   // Will be hashed
+  role      String   @default("STUDENT") // Role: STUDENT, ADMIN, LECTURER
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  enrollments Enrollment[]
+  moduleProgress ModuleProgress[]
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String   // e.g. "Manajemen Pemasaran"
+  description String?
+  labs        Lab[]
+  createdAt   DateTime @default(now())
+}
+
+model Lab {
+  id           String      @id @default(cuid())
+  title        String
+  description  String
+  thumbnail    String?
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  modules      Module[]
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  enrollments Enrollment[]
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  title     String
+  type      String   // ModuleType: QUIZ, VIDEO, PDF
+  content   String   // JSON Stringified
+  order     Int        @default(0)
+  labId     String
+  lab       Lab        @relation(fields: [labId], references: [id], onDelete: Cascade)
+  progress  ModuleProgress[]
+  
+  createdAt DateTime   @default(now())
+}
+
+model ModuleProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  moduleId  String
+  completed Boolean  @default(false)
+  score     Int?     // For Quizzes
+  updatedAt DateTime @updatedAt
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  labId     String
+  status    String   @default("ACTIVE") // ACTIVE, COMPLETED
+  joinedAt  DateTime @default(now())
+  completedAt DateTime?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lab       Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, labId])
+}
