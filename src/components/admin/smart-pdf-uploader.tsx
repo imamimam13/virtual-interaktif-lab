@@ -47,18 +47,14 @@ export default function SmartPdfUploader({ labId }: { labId: string }) {
         // Emulate delay
         await new Promise(r => setTimeout(r, 1500));
 
-        // Create FormData
-        const formData = new FormData();
-        formData.append("title", file.name.replace(".pdf", ""));
-        formData.append("type", "PDF");
-        formData.append("content", "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"); // Placeholder URL for demo
-        formData.append("labId", labId);
+        const title = file.name.replace(".pdf", "");
+        const content = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"; // Placeholder URL for demo
 
         try {
             // Re-use existing createModule or make a specific one? 
             // We'll use a specialized client-side wrapper that calls the server action
-            const res = await createModuleFromPdf(formData);
-            if (res.message.includes("success")) {
+            const res = await createModuleFromPdf(labId, content, title);
+            if (res.success) {
                 setStatus("SUCCESS");
                 router.refresh();
                 setTimeout(() => setStatus("IDLE"), 2000);
