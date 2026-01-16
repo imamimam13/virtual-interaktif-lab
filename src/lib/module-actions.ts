@@ -45,6 +45,34 @@ export async function createModule(prevState: any, formData: FormData) {
     }
 }
 
+export async function createModuleFromPdf(labId: string, fileUrl: string, fileName: string) {
+    try {
+        // Get max order
+        const lastModule = await prisma.module.findFirst({
+            where: { labId },
+            orderBy: { order: 'desc' }
+        });
+        const nextOrder = (lastModule?.order ?? 0) + 1;
+
+        await prisma.module.create({
+            data: {
+                title: fileName,
+                type: "PDF",
+                content: fileUrl,
+                labId: labId,
+                order: nextOrder
+            }
+        });
+
+        revalidatePath(`/admin/labs/${labId}/modules`);
+        return { success: true };
+    } catch (error) {
+        console.error("Error creating module from PDF:", error);
+        return { success: false, error: "Failed to create module database entry" };
+    }
+}
+
+
 export async function deleteModule(id: string, labId: string) {
     try {
         await prisma.module.delete({ where: { id } });

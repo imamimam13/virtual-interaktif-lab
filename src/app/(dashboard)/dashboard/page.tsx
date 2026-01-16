@@ -55,7 +55,7 @@ export default async function DashboardPage({
                 }
             }
         });
-        enrolledLabs = user?.enrollments.map(e => e.lab) || [];
+        enrolledLabs = user?.enrollments.map((e: any) => e.lab) || [];
     }
 
     const LabGrid = ({ labs, emptyMessage }: { labs: any[], emptyMessage: string }) => (
