@@ -8,11 +8,11 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "3000:3000"
+      - "8795:3000"
     environment:
       - DATABASE_URL=file:/app/prisma/dev.db
       - NEXTAUTH_SECRET=changethissecretinproduction
-      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_URL=http://localhost:8795
     volumes:
       # Persist the local SQLite file to the container
       # This maps your local 'prisma' folder (containing dev.db) to the container

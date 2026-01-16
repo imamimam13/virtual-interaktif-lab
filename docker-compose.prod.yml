@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  app:
+    container_name: virtual-lab-prod
+    # Pull from Docker Hub instead of building locally
+    image: imamimam13/virtual-interaktif-lab:latest
+    restart: always
+    ports:
+      - "8795:3000"
+    environment:
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - NEXTAUTH_SECRET=changethissecretinproduction
+      - NEXTAUTH_URL=http://localhost:8795
+    volumes:
+      # Persist the local SQLite file to the container
+      - ./prisma:/app/prisma
+    labels:
+      - "com.centurylinklabs.watchtower.scope=virtual-lab-scope"
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower-updater
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 --cleanup --scope virtual-lab-scope
+    restart: always
