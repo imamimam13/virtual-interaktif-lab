@@ -18,21 +18,19 @@ export default async function ModulePage({ params }: { params: Promise<{ moduleI
 
     const currentModule = await prisma.module.findUnique({
         where: { id: moduleId },
-        include: {
-            lab: true
-        }
+        include: { lab: true }
     });
 
     if (!currentModule) notFound();
 
-    // Fetch all modules in this lab to build navigation
+    // Fetch all modules in this lab to calculate next/prev
     const allModules = await prisma.module.findMany({
         where: { labId: currentModule.labId },
         orderBy: { order: 'asc' }
     });
 
     // Add 'completed' flag stub (will implement real progress check later)
-    const modulesWithProgress = allModules.map(m => ({
+    const modulesWithProgress = allModules.map((m: any) => ({
         ...m,
         completed: false // Placeholder for now
     }));
