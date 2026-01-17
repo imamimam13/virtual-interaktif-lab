@@ -9,12 +9,12 @@ services:
     ports:
       - "8795:3000"
     environment:
-      - DATABASE_URL=file:/app/prisma/dev.db
+      - DATABASE_URL=file:/app/db/prod.db
       - NEXTAUTH_SECRET=changethissecretinproduction
       - NEXTAUTH_URL=http://localhost:8795
     volumes:
-      # Persist the local SQLite file to the container
-      - ./prisma:/app/prisma
+      # Persist the local SQLite file to the container (mapped to separate folder to avoid overwriting app code)
+      - ./prisma/db:/app/db
     labels:
       - "com.centurylinklabs.watchtower.scope=virtual-lab-scope"
 
