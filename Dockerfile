@@ -61,6 +61,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/seed_all.js ./seed_all.js
 
+# Install dependencies for auxiliary scripts (seed, migration) that might be pruned by standalone mode
+RUN npm install bcryptjs prisma && \
+    chown -R nextjs:nodejs node_modules
+
+
 USER nextjs
 
 EXPOSE 3000
