@@ -1,13 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Plus, Edit, Trash2, FileCode } from "lucide-react";
+import { Plus, Edit, FileCode } from "lucide-react";
 import Link from "next/link";
 import { deleteTemplate } from "@/lib/certificate-actions";
 import { Badge } from "@/components/ui/badge";
+import DeleteTemplateButton from "./delete-button";
 
 export default async function CertificateTemplatesPage() {
-    const templates = await prisma.certificateTemplate.findMany({
+    // @ts-ignore - Prisma client types are stale
+    const templates = await (prisma as any).certificateTemplate.findMany({
         orderBy: { updatedAt: "desc" },
         include: {
             _count: { select: { labs: true } }
@@ -54,11 +56,7 @@ export default async function CertificateTemplatesPage() {
                                     <Edit className="mr-2 h-4 w-4" /> Edit
                                 </Button>
                             </Link>
-                            <form action={deleteTemplate.bind(null, template.id)}>
-                                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </form>
+                            <DeleteTemplateButton id={template.id} />
                         </CardFooter>
                     </Card>
                 ))}
