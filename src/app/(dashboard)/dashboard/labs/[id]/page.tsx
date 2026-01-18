@@ -98,11 +98,8 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
                         </div>
                     ) : (
                         lab.modules.map((module: any, index: number) => {
-                            const ModuleWrapper = isEnrolled ? Link : 'div';
-                            const wrapperProps = isEnrolled ? { href: `/dashboard/labs/${lab.id}/modules/${module.id}` } : {};
-
-                            return (
-                                <ModuleWrapper key={module.id} {...wrapperProps} className="block relative">
+                            const content = (
+                                <>
                                     {!isEnrolled && (
                                         <div className="absolute inset-0 bg-white/50 dark:bg-black/50 z-10 cursor-not-allowed flex items-center justify-center backdrop-blur-[1px]">
                                             <Lock className="h-6 w-6 text-muted-foreground/50" />
@@ -122,7 +119,21 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
                                             </Button>
                                         </CardContent>
                                     </Card>
-                                </ModuleWrapper>
+                                </>
+                            );
+
+                            if (isEnrolled) {
+                                return (
+                                    <Link key={module.id} href={`/dashboard/labs/${lab.id}/modules/${module.id}`} className="block relative">
+                                        {content}
+                                    </Link>
+                                );
+                            }
+
+                            return (
+                                <div key={module.id} className="block relative">
+                                    {content}
+                                </div>
                             );
                         })
                     )}
