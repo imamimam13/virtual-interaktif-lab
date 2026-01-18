@@ -1,0 +1,24 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- FLASK BODY -->
+  <path d="M256 96V192C256 192 160 224 160 320C160 373.019 202.981 416 256 416C309.019 416 352 373.019 352 320C352 224 256 192 256 192V64H288V128" stroke="#0EA5E9" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M224 64H288" stroke="#0EA5E9" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- LIQUID -->
+  <path d="M192 320C192 320 200 288 256 288C312 288 320 320 320 320V336C320 362.5 291.345 384 256 384C220.655 384 192 362.5 192 336V320Z" fill="#0EA5E9" fill-opacity="0.2"/>
+  <path d="M192 320C192 320 200 288 256 288C312 288 320 320 320 320" stroke="#0EA5E9" stroke-width="24" stroke-linecap="round"/>
+
+  <!-- CIRCUIT LINES -->
+  <circle cx="256" cy="336" r="16" fill="#0284C7"/>
+  <path d="M256 320V288" stroke="#0284C7" stroke-width="16" stroke-linecap="round"/>
+  <path d="M256 352V384" stroke="#0284C7" stroke-width="16" stroke-linecap="round"/>
+  <path d="M239 336H192" stroke="#0284C7" stroke-width="16" stroke-linecap="round"/>
+  <path d="M273 336H320" stroke="#0284C7" stroke-width="16" stroke-linecap="round"/>
+  
+  <!-- BUBBLES -->
+  <circle cx="280" cy="240" r="12" fill="#38BDF8"/>
+  <circle cx="240" cy="220" r="8" fill="#38BDF8"/>
+  <circle cx="260" cy="160" r="10" fill="#38BDF8"/>
+
+  <!-- SCREEN FRAME -->
+  <rect x="64" y="64" width="384" height="384" rx="48" stroke="#0F172A" stroke-width="16" stroke-opacity="0.1"/>
+</svg>
