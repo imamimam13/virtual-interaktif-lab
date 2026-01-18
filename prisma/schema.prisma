@@ -66,6 +66,8 @@ model CertificateTemplate {
   name      String
   html      String   // @db.Text in postgres, default String in sqlite
   css       String   // @db.Text
+  backgroundUrl String?
+  elements  String?  // JSON String: [{id, type, x, y, style, ...}]
   isDefault Boolean  @default(false)
   
   labs      Lab[]

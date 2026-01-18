@@ -9,6 +9,8 @@ const TemplateSchema = z.object({
     html: z.string().min(10),
     css: z.string(),
     isDefault: z.boolean().optional(),
+    backgroundUrl: z.string().optional(),
+    elements: z.string().optional(),
 });
 
 export async function createTemplate(prevState: any, formData: FormData) {
@@ -17,6 +19,8 @@ export async function createTemplate(prevState: any, formData: FormData) {
         html: formData.get("html"),
         css: formData.get("css"),
         isDefault: formData.get("isDefault") === "on",
+        backgroundUrl: formData.get("backgroundUrl"),
+        elements: formData.get("elements"),
     });
 
     if (!validated.success) {
@@ -38,6 +42,8 @@ export async function createTemplate(prevState: any, formData: FormData) {
                 html: validated.data.html,
                 css: validated.data.css,
                 isDefault: validated.data.isDefault || false,
+                backgroundUrl: validated.data.backgroundUrl,
+                elements: validated.data.elements,
             }
         });
 
@@ -54,6 +60,8 @@ export async function updateTemplate(id: string, prevState: any, formData: FormD
         html: formData.get("html"),
         css: formData.get("css"),
         isDefault: formData.get("isDefault") === "on",
+        backgroundUrl: formData.get("backgroundUrl"),
+        elements: formData.get("elements"),
     });
 
     if (!validated.success) {
@@ -75,6 +83,8 @@ export async function updateTemplate(id: string, prevState: any, formData: FormD
                 html: validated.data.html,
                 css: validated.data.css,
                 isDefault: validated.data.isDefault || false,
+                backgroundUrl: validated.data.backgroundUrl,
+                elements: validated.data.elements,
             }
         });
 
