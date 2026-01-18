@@ -29,6 +29,15 @@ const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(({ videoI
     const containerRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(true);
 
+    // Keep latest callback in ref to avoid stale closure in setInterval
+    const onTimeUpdateRef = useRef(onTimeUpdate);
+    const onStateChangeRef = useRef(onStateChange);
+
+    useEffect(() => {
+        onTimeUpdateRef.current = onTimeUpdate;
+        onStateChangeRef.current = onStateChange;
+    }, [onTimeUpdate, onStateChange]);
+
     // Expose methods to parent
     useImperativeHandle(ref, () => ({
         play: () => playerRef.current?.playVideo(),
@@ -74,12 +83,12 @@ const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(({ videoI
                         interval = setInterval(() => {
                             if (playerRef.current && playerRef.current.getCurrentTime) {
                                 const time = playerRef.current.getCurrentTime();
-                                if (onTimeUpdate) onTimeUpdate(time);
+                                if (onTimeUpdateRef.current) onTimeUpdateRef.current(time);
                             }
                         }, 500); // Check every 500ms
                     },
                     'onStateChange': (event: any) => {
-                        if (onStateChange) onStateChange(event.data);
+                        if (onStateChangeRef.current) onStateChangeRef.current(event.data);
                     }
                 }
             });
@@ -89,10 +98,7 @@ const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(({ videoI
 
         return () => {
             if (interval) clearInterval(interval);
-            if (playerRef.current) {
-                // Cleaning up YT player instance if needed, usually mostly fine to leave
-                // playerRef.current.destroy(); 
-            }
+            // We usually don't destroy the player to avoid teardown issues with React 18 strict mode
         };
     }, [videoId]);
 
