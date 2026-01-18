@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import YouTubePlayer, { YouTubePlayerRef } from "./youtube-player";
+import GenericVideoPlayer, { VideoPlayerRef } from "./generic-video-player";
 import QuizRunner from "./quiz-runner";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,7 +39,9 @@ interface InteractiveVideoViewerProps {
 export default function InteractiveVideoViewer({ content, onComplete }: InteractiveVideoViewerProps) {
     const [data, setData] = useState<InteractiveVideoContent | null>(null);
     const [parsed, setParsed] = useState(false);
-    const playerRef = useRef<YouTubePlayerRef>(null);
+
+    // We can use a union ref type or just 'any' for simplicity if methods match
+    const playerRef = useRef<YouTubePlayerRef | VideoPlayerRef>(null);
 
     // State
     const [currentTime, setCurrentTime] = useState(0);
@@ -75,7 +78,7 @@ export default function InteractiveVideoViewer({ content, onComplete }: Interact
 
         if (!data || !data.questions || isPausedForQuestion) return;
 
-        // Check for questions within 1 second window
+        // Check for questions within 1.5 second window
         const questionIdx = data.questions.findIndex((q, idx) => {
             const timeDiff = Math.abs(q.timestamp - time);
             return timeDiff < 1.5 && !completedQuestions.has(idx);
@@ -116,22 +119,31 @@ export default function InteractiveVideoViewer({ content, onComplete }: Interact
     };
 
     if (!parsed || !data) return <div className="text-red-500">Error loading content.</div>;
-    const youtubeId = getYoutubeId(data.videoUrl);
 
-    if (!youtubeId) return <div className="p-4">Invalid Video URL</div>;
+    // Determine Player Type
+    const youtubeId = getYoutubeId(data.videoUrl);
+    const isYoutube = !!youtubeId;
 
     return (
         <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
             {/* Video Section */}
             <div className="lg:col-span-2 flex flex-col gap-4 relative">
                 <Card className="flex-1 overflow-hidden bg-black p-0 border-0 rounded-xl shadow-lg relative group">
-                    <YouTubePlayer
-                        ref={playerRef}
-                        videoId={youtubeId}
-                        onTimeUpdate={handleTimeUpdate}
-                    />
+                    {isYoutube ? (
+                        <YouTubePlayer
+                            ref={playerRef as React.Ref<YouTubePlayerRef>}
+                            videoId={youtubeId!}
+                            onTimeUpdate={handleTimeUpdate}
+                        />
+                    ) : (
+                        <GenericVideoPlayer
+                            ref={playerRef as React.Ref<VideoPlayerRef>}
+                            url={data.videoUrl}
+                            onTimeUpdate={handleTimeUpdate}
+                        />
+                    )}
 
-                    {/* Overlay when paused for question (Optional visual cue) */}
+                    {/* Overlay when paused for question */}
                     {isPausedForQuestion && (
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10 transition-all">
                             <div className="text-white text-center animate-in fade-in zoom-in duration-300">
@@ -146,7 +158,9 @@ export default function InteractiveVideoViewer({ content, onComplete }: Interact
                 <div className="px-1 flex justify-between items-center">
                     <div>
                         <h3 className="font-semibold text-lg mb-1">Interactive Video</h3>
-                        <p className="text-sm text-muted-foreground">Video akan otomatis berhenti saat ada pertanyaan.</p>
+                        <p className="text-sm text-muted-foreground">
+                            {isYoutube ? "YouTube Source" : "Direct Video Source"} • Video akan otomatis berhenti saat ada pertanyaan.
+                        </p>
                     </div>
                 </div>
             </div>
