@@ -18,9 +18,10 @@ interface QuizRunnerProps {
     questions: Question[];
     onComplete: (score: number) => void;
     compact?: boolean;
+    finishLabel?: string;
 }
 
-export default function QuizRunner({ questions, onComplete, compact = false }: QuizRunnerProps) {
+export default function QuizRunner({ questions, onComplete, compact = false, finishLabel = "See Results" }: QuizRunnerProps) {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [streak, setStreak] = useState(0);
@@ -236,7 +237,7 @@ export default function QuizRunner({ questions, onComplete, compact = false }: Q
                         className="flex justify-end"
                     >
                         <Button onClick={handleNext} size="lg" className="w-full md:w-auto text-lg py-6 shadow-xl bg-slate-900 hover:bg-slate-800">
-                            Next Question <ArrowRight className="ml-2" />
+                            {currentQuestionIndex < questions.length - 1 ? "Next Question" : finishLabel} <ArrowRight className="ml-2" />
                         </Button>
                     </motion.div>
                 )}

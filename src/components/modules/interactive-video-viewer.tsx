@@ -228,6 +228,7 @@ export default function InteractiveVideoViewer({ content, onComplete }: Interact
                                     questions={[activeQuestion]}
                                     onComplete={handleQuestionComplete}
                                     compact={true}
+                                    finishLabel="Lanjut Video"
                                 />
                             </div>
                         )}
