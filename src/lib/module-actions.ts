@@ -68,6 +68,7 @@ export async function updateModule(moduleId: string, prevState: any, formData: F
         });
 
         revalidatePath(`/admin/labs/${validated.data.labId}/modules`);
+        revalidatePath(`/dashboard/module/${moduleId}`);
         return { message: "Module updated successfully" };
     } catch (e) {
         return { message: "Failed to update module" };
