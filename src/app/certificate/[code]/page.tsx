@@ -45,7 +45,7 @@ export default async function CertificatePage({ params }: { params: Promise<{ co
             month: 'long',
             year: 'numeric'
         }),
-        instructor: certificate.lab.instructor || "Kepala Laboratorium"
+        instructor: certificate.lab.instructor || "LPPM"
     };
 
     let finalHtml = "";
