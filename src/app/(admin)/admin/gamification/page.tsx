@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Trash2 } from "lucide-react";
 import { deleteLevelTitle } from "@/lib/gamification-actions";
+import GamificationForm from "./gamification-form";
 
 export default async function GamificationPage() {
     const levels = await prisma.levelTitle.findMany({
@@ -17,7 +18,7 @@ export default async function GamificationPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-                import GamificationForm from "./gamification-form";
+
 
                 // ...
 
