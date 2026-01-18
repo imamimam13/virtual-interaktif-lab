@@ -1,12 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Trash2 } from "lucide-react";
-import { deleteLevelTitle } from "@/lib/gamification-actions";
 import GamificationForm from "./gamification-form";
+import DeleteLevelTitleButton from "./delete-button";
 
 export default async function GamificationPage() {
-    const levels = await prisma.levelTitle.findMany({
+    // @ts-ignore
+    const levels = await (prisma as any).levelTitle.findMany({
         orderBy: { level: 'asc' }
     });
 
@@ -43,7 +42,7 @@ export default async function GamificationPage() {
                             {levels.length === 0 ? (
                                 <p className="text-sm text-muted-foreground text-center py-8">Belum ada title yang diatur.</p>
                             ) : (
-                                levels.map((l) => (
+                                levels.map((l: any) => (
                                     <div key={l.id} className="flex items-center justify-between p-3 border rounded-lg bg-slate-50 dark:bg-zinc-900">
                                         <div className="flex items-center gap-3">
                                             <div className="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center text-yellow-600 font-bold text-sm">
@@ -54,11 +53,7 @@ export default async function GamificationPage() {
                                                 <div className="text-xs text-muted-foreground">Min. {(l.level - 1) * 1000} XP</div>
                                             </div>
                                         </div>
-                                        <form action={deleteLevelTitle.bind(null, l.level)}>
-                                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </form>
+                                        <DeleteLevelTitleButton level={l.level} />
                                     </div>
                                 ))
                             )}
