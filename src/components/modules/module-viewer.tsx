@@ -9,11 +9,13 @@ import { cn } from "@/lib/utils";
 import VideoPlayer from "./video-player";
 import PdfViewer from "./pdf-viewer";
 import QuizRunner from "./quiz-runner";
+import SimulationViewer from "./simulation-viewer";
+import InteractiveVideoViewer from "./interactive-video-viewer";
 
 interface Module {
     id: string;
     title: string;
-    type: "VIDEO" | "PDF" | "QUIZ";
+    type: "VIDEO" | "PDF" | "QUIZ" | "SIMULATION" | "INTERACTIVE_VIDEO";
     content: string; // JSON string
     completed: boolean;
 }
@@ -48,6 +50,10 @@ export default function ModuleViewer({ currentModule, allModules, labId }: Modul
                     console.error("Invalid Quiz JSON", e);
                 }
                 return <QuizRunner questions={quizData} onComplete={() => { }} />;
+            case "SIMULATION":
+                return <SimulationViewer url={currentModule.content} />;
+            case "INTERACTIVE_VIDEO":
+                return <InteractiveVideoViewer content={currentModule.content} onComplete={() => { }} />;
             default:
                 return <div>Unsupported Module Type</div>;
         }

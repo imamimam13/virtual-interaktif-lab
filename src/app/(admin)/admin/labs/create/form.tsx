@@ -25,6 +25,8 @@ type LabData = {
     description: string;
     departmentId: string | null;
     thumbnail: string | null;
+    instructor: string | null;
+    grading: string | null;
 };
 
 function SubmitButton({ isEdit }: { isEdit: boolean }) {
@@ -79,6 +81,17 @@ export default function LabForm({ departments, initialData }: { departments: Dep
                         </div>
 
                         <div className="grid gap-2">
+                            <Label htmlFor="instructor">Nama Dosen / Instruktur</Label>
+                            <Input
+                                id="instructor"
+                                name="instructor"
+                                placeholder="Contoh: Dr. Budi Santoso"
+                                defaultValue={state?.payload?.instructor || initialData?.instructor || ""}
+                            />
+                            <p className="text-xs text-muted-foreground">Nama dosen yang bertanggung jawab (Dapat diisi meskipun dibuat oleh admin).</p>
+                        </div>
+
+                        <div className="grid gap-2">
                             <Label htmlFor="desc">Deskripsi Singkat</Label>
                             <Textarea
                                 id="desc"
@@ -125,7 +138,25 @@ export default function LabForm({ departments, initialData }: { departments: Dep
                             </div>
                         )}
 
-                        <div className="grid gap-2">
+                        <div className="space-y-2 border-t pt-4">
+                            <Label>Konfigurasi Penilaian (Grading System)</Label>
+                            <div className="grid gap-2">
+                                <Label htmlFor="grading" className="text-xs font-normal">JSON Formatter (Bobot Penilaian)</Label>
+                                <Textarea
+                                    id="grading"
+                                    name="grading"
+                                    className="font-mono text-xs"
+                                    rows={5}
+                                    placeholder='{ "VIDEO": 10, "QUIZ": 40, "SIMULATION": 50 }'
+                                    defaultValue={state?.payload?.grading || initialData?.grading || ""}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Tentukan bobot dalam format JSON. Total bobot bisa disesuaikan.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-2 pt-2">
                             <Label>Media / Thumbnail (Optional)</Label>
                             <Input type="file" name="thumbnail" className="cursor-pointer" accept="image/*" />
                             <p className="text-xs text-muted-foreground">Format: JPG, PNG. Max 5MB.</p>

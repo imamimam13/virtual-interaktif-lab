@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import { Search, UserPlus, MoreVertical, Shield, User } from "lucide-react";
 import {
     DropdownMenu,
@@ -26,9 +27,11 @@ export default async function AdminUsersPage() {
                     <h1 className="text-3xl font-bold">Manajemen Pengguna</h1>
                     <p className="text-muted-foreground">Kelola akun mahasiswa dan dosen.</p>
                 </div>
-                <Button>
-                    <UserPlus className="mr-2 h-4 w-4" /> Tambah User
-                </Button>
+                <Link href="/admin/users/create">
+                    <Button>
+                        <UserPlus className="mr-2 h-4 w-4" /> Tambah User
+                    </Button>
+                </Link>
             </div>
 
             <div className="flex gap-4">

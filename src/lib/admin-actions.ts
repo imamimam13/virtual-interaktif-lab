@@ -10,6 +10,8 @@ const CreateLabSchema = z.object({
     description: z.string().min(10, "Description must be at least 10 characters"),
     departmentId: z.string().optional().nullable().transform(val => val === "" ? null : val),
     isIndependent: z.coerce.boolean(),
+    instructor: z.string().optional(),
+    grading: z.string().optional(), // JSON
 });
 
 export type LabFormState = {
@@ -18,13 +20,17 @@ export type LabFormState = {
         description?: string[];
         departmentId?: string[];
         isIndependent?: string[];
+        instructor?: string[];
+        grading?: string[];
     };
     message?: string | null;
     payload?: {
         title: string;
         description: string;
         departmentId: string;
-        isIndependent: File | string | null; // FormDataEntryValue
+        isIndependent: File | string | null;
+        instructor?: string;
+        grading?: string;
     } | null;
 };
 
@@ -34,6 +40,8 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         description: formData.get("description") as string,
         departmentId: formData.get("departmentId") as string,
         isIndependent: formData.get("isIndependent"),
+        instructor: formData.get("instructor") as string,
+        grading: formData.get("grading") as string,
     };
 
     console.log("createLab Action Received:", rawData);
@@ -43,6 +51,8 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         description: rawData.description,
         departmentId: rawData.departmentId,
         isIndependent: rawData.isIndependent,
+        instructor: rawData.instructor,
+        grading: rawData.grading,
     });
 
     if (!validatedFields.success) {
@@ -54,7 +64,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         };
     }
 
-    const { title, description, departmentId, isIndependent } = validatedFields.data;
+    const { title, description, departmentId, isIndependent, instructor, grading } = validatedFields.data;
 
     try {
         await prisma.lab.create({
@@ -63,6 +73,8 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
                 description,
                 departmentId: isIndependent ? null : departmentId,
                 thumbnail: "/images/placeholders/lab-default.jpg",
+                instructor,
+                grading
             },
         });
     } catch (error) {
@@ -85,6 +97,8 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         description: formData.get("description") as string,
         departmentId: formData.get("departmentId") as string,
         isIndependent: formData.get("isIndependent"),
+        instructor: formData.get("instructor") as string,
+        grading: formData.get("grading") as string,
     };
 
     console.log("updateLab Action Received:", rawData);
@@ -94,6 +108,8 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         description: rawData.description,
         departmentId: rawData.departmentId,
         isIndependent: rawData.isIndependent,
+        instructor: rawData.instructor,
+        grading: rawData.grading,
     });
 
     if (!validatedFields.success) {
@@ -104,7 +120,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         };
     }
 
-    const { title, description, departmentId, isIndependent } = validatedFields.data;
+    const { title, description, departmentId, isIndependent, instructor, grading } = validatedFields.data;
 
     try {
         await prisma.lab.update({
@@ -113,6 +129,8 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
                 title,
                 description,
                 departmentId: isIndependent ? null : departmentId,
+                instructor,
+                grading
             },
         });
     } catch (error) {
@@ -187,3 +205,52 @@ export async function deleteDepartment(id: string) {
     }
 }
 
+
+const CreateUserSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6).optional().or(z.literal('')),
+    name: z.string().min(2),
+    role: z.enum(["STUDENT", "LECTURER", "ADMIN"]),
+    departmentId: z.string().optional().nullable().transform(val => val === "" ? null : val),
+});
+
+export async function createUser(prevState: any, formData: FormData) {
+    const rawData = {
+        email: formData.get("email"),
+        password: formData.get("password"),
+        name: formData.get("name"),
+        role: formData.get("role"),
+        departmentId: formData.get("departmentId"),
+    };
+
+    const validated = CreateUserSchema.safeParse(rawData);
+
+    if (!validated.success) {
+        return {
+            errors: validated.error.flatten().fieldErrors,
+            message: "Validation Error",
+            payload: rawData
+        };
+    }
+
+    // Basic password hashing simulation
+    const hashedPassword = validated.data.password || "defaultPassword123";
+
+    try {
+        await prisma.user.create({
+            data: {
+                email: validated.data.email,
+                password: hashedPassword,
+                name: validated.data.name,
+                role: validated.data.role,
+                departmentId: validated.data.departmentId,
+            }
+        });
+    } catch (e) {
+        console.error(e);
+        return { message: "Failed to create user. Email might be in use." };
+    }
+
+    revalidatePath("/admin/users");
+    redirect("/admin/users");
+}

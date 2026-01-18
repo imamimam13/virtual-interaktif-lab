@@ -65,36 +65,84 @@ export default function CreateModuleForm({ labId }: { labId: string }) {
                                     <SelectItem value="VIDEO">Video</SelectItem>
                                     <SelectItem value="PDF">PDF Document</SelectItem>
                                     <SelectItem value="QUIZ">Interactive Quiz</SelectItem>
+                                    <SelectItem value="SIMULATION">Simulation (HTML5/PhET)</SelectItem>
+                                    <SelectItem value="INTERACTIVE_VIDEO">Interactive Video (Video + Quiz)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="content">
-                                {type === "VIDEO" ? "Video URL (YouTube/MP4)" :
-                                    type === "PDF" ? "PDF URL" : "Quiz Data (JSON)"}
-                            </Label>
-                            {type === "QUIZ" ? (
-                                <Textarea
-                                    name="content"
-                                    id="content"
-                                    placeholder='{"questions": [...]}'
-                                    className="font-mono text-xs"
-                                    rows={10}
-                                    defaultValue='[{"question": "Example?", "options": ["A", "B"], "answer": 0}]'
-                                />
-                            ) : (
-                                <Input
-                                    name="content"
-                                    id="content"
-                                    placeholder={type === "VIDEO" ? "https://youtube.com/..." : "https://example.com/file.pdf"}
-                                    required
-                                />
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                                {type === "QUIZ" ? "Enter quiz questions in JSON format." : "Provide the direct URL to the resource."}
-                            </p>
-                        </div>
+                        {type === "INTERACTIVE_VIDEO" ? (
+                            <div className="space-y-4 border p-4 rounded-lg bg-gray-50 dark:bg-zinc-900/50">
+                                <p className="text-sm font-medium">Interactive Video Configuration</p>
+                                <div className="grid gap-2">
+                                    <Label>Video URL</Label>
+                                    <Input
+                                        id="video-url"
+                                        placeholder="https://youtube.com/..."
+                                        onChange={(e) => {
+                                            // Manual simple construction of the JSON
+                                            const videoUrl = e.target.value;
+                                            const quizJson = (document.getElementById("quiz-json") as HTMLTextAreaElement)?.value || '[]';
+                                            (document.getElementById("content-hidden") as HTMLInputElement).value = JSON.stringify({ videoUrl, questions: JSON.parse(quizJson || '[]') });
+                                        }}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>Quiz Data (JSON)</Label>
+                                    <Textarea
+                                        id="quiz-json"
+                                        placeholder='[{"question": "...", "options": [...], "answer": 0}]'
+                                        className="font-mono text-xs"
+                                        rows={8}
+                                        defaultValue='[]'
+                                        onChange={(e) => {
+                                            const quizJson = e.target.value;
+                                            const videoUrl = (document.getElementById("video-url") as HTMLInputElement)?.value || '';
+                                            try {
+                                                const parsed = JSON.parse(quizJson);
+                                                (document.getElementById("content-hidden") as HTMLInputElement).value = JSON.stringify({ videoUrl, questions: parsed });
+                                            } catch (e) { }
+                                        }}
+                                    />
+                                </div>
+                                <input type="hidden" name="content" id="content-hidden" />
+                            </div>
+                        ) : (
+                            <div className="grid gap-2">
+                                <Label htmlFor="content">
+                                    {type === "VIDEO" ? "Video URL (YouTube/MP4)" :
+                                        type === "PDF" ? "PDF URL" :
+                                            type === "SIMULATION" ? "Simulation URL (PhET/LabXchange)" :
+                                                "Quiz Data (JSON)"}
+                                </Label>
+                                {type === "QUIZ" ? (
+                                    <Textarea
+                                        name="content"
+                                        id="content"
+                                        placeholder='{"questions": [...]}'
+                                        className="font-mono text-xs"
+                                        rows={10}
+                                        defaultValue='[{"question": "Example?", "options": ["A", "B"], "answer": 0}]'
+                                    />
+                                ) : (
+                                    <Input
+                                        name="content"
+                                        id="content"
+                                        placeholder={
+                                            type === "VIDEO" ? "https://youtube.com/..." :
+                                                type === "SIMULATION" ? "https://phet.colorado.edu/..." :
+                                                    "https://example.com/file.pdf"
+                                        }
+                                        required
+                                    />
+                                )}
+                                <p className="text-xs text-muted-foreground">
+                                    {type === "QUIZ" ? "Enter quiz questions in JSON format." :
+                                        type === "SIMULATION" ? "Direct URL to PhET or LabXchange HTML5 simulation." :
+                                            "Provide the direct URL to the resource."}
+                                </p>
+                            </div>
+                        )}
 
                         {state?.message && (
                             <p className={`text-sm ${state.message.includes("success") ? "text-green-600" : "text-red-500"}`}>

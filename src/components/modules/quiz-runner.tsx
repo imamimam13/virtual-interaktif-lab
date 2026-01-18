@@ -17,9 +17,10 @@ interface Question {
 interface QuizRunnerProps {
     questions: Question[];
     onComplete: (score: number) => void;
+    compact?: boolean;
 }
 
-export default function QuizRunner({ questions, onComplete }: QuizRunnerProps) {
+export default function QuizRunner({ questions, onComplete, compact = false }: QuizRunnerProps) {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [streak, setStreak] = useState(0);
@@ -90,11 +91,11 @@ export default function QuizRunner({ questions, onComplete }: QuizRunnerProps) {
 
     if (isFinished) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-2xl">
-                <Trophy className="h-32 w-32 text-yellow-300 mb-6 drop-shadow-lg animate-bounce" />
-                <h2 className="text-4xl font-bold mb-2">Quiz Completed!</h2>
-                <p className="text-xl opacity-90 mb-8">Your amazing score:</p>
-                <div className="text-6xl font-black bg-white/20 px-8 py-4 rounded-xl backdrop-blur-md mb-8">
+            <div className={`flex flex-col items-center justify-center min-h-[500px] text-center ${compact ? 'p-4' : 'p-8'} bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-2xl`}>
+                <Trophy className={`${compact ? 'h-16 w-16' : 'h-32 w-32'} text-yellow-300 mb-6 drop-shadow-lg animate-bounce`} />
+                <h2 className={`${compact ? 'text-2xl' : 'text-4xl'} font-bold mb-2`}>Quiz Completed!</h2>
+                <p className={`${compact ? 'text-lg' : 'text-xl'} opacity-90 mb-8`}>Your amazing score:</p>
+                <div className={`${compact ? 'text-4xl px-4 py-2' : 'text-6xl px-8 py-4'} font-black bg-white/20 rounded-xl backdrop-blur-md mb-8`}>
                     {score}
                 </div>
                 <div className="flex gap-4">
@@ -107,38 +108,48 @@ export default function QuizRunner({ questions, onComplete }: QuizRunnerProps) {
     }
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className={`max-w-3xl mx-auto space-y-6 ${compact ? 'space-y-4' : ''}`}>
             {/* Header Stats */}
-            <div className="flex items-center justify-between bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border">
-                <div className="flex items-center gap-2">
-                    <div className="bg-yellow-100 p-2 rounded-lg">
-                        <Trophy className="h-6 w-6 text-yellow-600" />
+            {!compact && (
+                <div className="flex items-center justify-between bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border">
+                    <div className="flex items-center gap-2">
+                        <div className="bg-yellow-100 p-2 rounded-lg">
+                            <Trophy className="h-6 w-6 text-yellow-600" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-muted-foreground uppercase font-bold">Score</p>
+                            <p className="font-bold text-xl">{score}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground uppercase font-bold">Score</p>
-                        <p className="font-bold text-xl">{score}</p>
+                    <div className="flex flex-col items-center">
+                        <div className="text-sm font-semibold mb-1">Question {currentQuestionIndex + 1}/{questions.length}</div>
+                        <div className="w-48 h-2 bg-secondary rounded-full overflow-hidden">
+                            <motion.div
+                                className="h-full bg-blue-500"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="bg-orange-100 p-2 rounded-lg">
+                            <span role="img" aria-label="fire">🔥</span>
+                        </div>
+                        <div>
+                            <p className="text-xs text-muted-foreground uppercase font-bold">Streak</p>
+                            <p className="font-bold text-xl">{streak}</p>
+                        </div>
                     </div>
                 </div>
-                <div className="flex flex-col items-center">
-                    <div className="text-sm font-semibold mb-1">Question {currentQuestionIndex + 1}/{questions.length}</div>
-                    <div className="w-48 h-2 bg-secondary rounded-full overflow-hidden">
-                        <motion.div
-                            className="h-full bg-blue-500"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
-                        />
-                    </div>
+            )}
+
+            {/* Compact Header for Embedded Mode */}
+            {compact && (
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Q: {currentQuestionIndex + 1}/{questions.length}</span>
+                    <span>Score: {score}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="bg-orange-100 p-2 rounded-lg">
-                        <span role="img" aria-label="fire">🔥</span>
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground uppercase font-bold">Streak</p>
-                        <p className="font-bold text-xl">{streak}</p>
-                    </div>
-                </div>
-            </div>
+            )}
 
             {/* Question Card */}
             <div className="relative">
@@ -147,7 +158,7 @@ export default function QuizRunner({ questions, onComplete }: QuizRunnerProps) {
                     initial={{ opacity: 0, x: 50 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -50 }}
-                    className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl overflow-hidden border-2 border-primary/5"
+                    className={`bg-white dark:bg-zinc-800 rounded-2xl shadow-xl overflow-hidden border-2 border-primary/5 ${compact ? 'border-0 shadow-sm' : ''}`}
                 >
                     {/* Timer Bar */}
                     <div className="h-2 bg-gray-100">
@@ -159,17 +170,17 @@ export default function QuizRunner({ questions, onComplete }: QuizRunnerProps) {
                         />
                     </div>
 
-                    <div className="p-8 text-center min-h-[200px] flex items-center justify-center flex-col">
-                        <div className="mb-6 flex items-center justify-center h-16 w-16 rounded-full bg-purple-100 text-purple-600 font-bold text-xl">
+                    <div className={`${compact ? 'p-4 min-h-[100px]' : 'p-8 min-h-[200px]'} text-center flex items-center justify-center flex-col`}>
+                        <div className={`mb-4 flex items-center justify-center ${compact ? 'h-10 w-10 text-sm' : 'h-16 w-16 text-xl'} rounded-full bg-purple-100 text-purple-600 font-bold`}>
                             {timeLeft}s
                         </div>
-                        <h2 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100 leading-relaxed">
+                        <h2 className={`${compact ? 'text-lg' : 'text-2xl md:text-3xl'} font-bold text-slate-800 dark:text-slate-100 leading-relaxed`}>
                             {currentQuestion?.question}
                         </h2>
                     </div>
 
                     {/* Options Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-gray-50 dark:bg-zinc-900/50">
+                    <div className={`grid ${compact ? 'grid-cols-1 gap-2 p-2' : 'grid-cols-1 md:grid-cols-2 gap-4 p-6'} bg-gray-50 dark:bg-zinc-900/50`}>
                         {currentQuestion?.options.map((option, idx) => {
                             const isSelected = selectedOption === idx;
                             const isCorrect = idx === currentQuestion.answer;
@@ -196,13 +207,13 @@ export default function QuizRunner({ questions, onComplete }: QuizRunnerProps) {
                                     onClick={() => handleAnswer(idx)}
                                     disabled={isAnswered}
                                     className={`
-                                        relative p-6 rounded-xl text-left transition-all duration-200 font-bold text-lg shadow-md
+                                        relative ${compact ? 'p-3 text-sm' : 'p-6 text-lg'} rounded-xl text-left transition-all duration-200 font-bold shadow-md
                                         flex items-center justify-between
                                         ${cardStyle} ${bgStyle}
                                     `}
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="h-8 w-8 rounded-full bg-black/20 flex items-center justify-center text-sm">
+                                        <div className={`${compact ? 'h-6 w-6 text-xs' : 'h-8 w-8 text-sm'} rounded-full bg-black/20 flex items-center justify-center`}>
                                             {String.fromCharCode(65 + idx)}
                                         </div>
                                         <span>{option}</span>

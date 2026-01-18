@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const CreateModuleSchema = z.object({
     title: z.string().min(3),
-    type: z.enum(["VIDEO", "PDF", "QUIZ"]),
+    type: z.enum(["VIDEO", "PDF", "QUIZ", "SIMULATION", "INTERACTIVE_VIDEO"]),
     content: z.string().min(1), // JSON string or URL
     labId: z.string(),
 });

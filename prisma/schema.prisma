@@ -22,6 +22,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
   enrollments Enrollment[]
   moduleProgress ModuleProgress[]
 }
@@ -30,6 +32,8 @@ model Department {
   id          String   @id @default(cuid())
   name        String   // e.g. "Manajemen Pemasaran"
   description String?
+  
+  users       User[]
   labs        Lab[]
   createdAt   DateTime @default(now())
 }
@@ -39,6 +43,9 @@ model Lab {
   title        String
   description  String
   thumbnail    String?
+  instructor   String?     // Nama Dosen Pembuat
+  grading      String?     // JSON: { "VIDEO": 10, "QUIZ": 40, ... }
+  
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
   modules      Module[]
