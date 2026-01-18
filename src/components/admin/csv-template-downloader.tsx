@@ -5,11 +5,12 @@ import { Download } from "lucide-react";
 
 export default function DownloadTemplate() {
     const handleDownload = () => {
-        const headers = ["LabTitle", "Description", "Department (Exact Name)", "Instructor", "Grading (JSON)", "ModuleTitle", "Type (VIDEO/PDF/QUIZ)", "Content (URL or Quiz JSON)"];
+        const headers = ["LabTitle", "Description", "Department (Exact Name)", "Instructor", "Grading (JSON)", "ModuleTitle", "Type (VIDEO/PDF/SIMULATION/INTERACTIVE_VIDEO)", "Content (URL or Quiz JSON)"];
         const rows = [
             ["Lab Audit Digital", "Simulasi Audit", "Akuntansi (S1)", "Dr. Budi", '{"VIDEO": 10, "QUIZ": 90}', "Intro Audit", "VIDEO", "https://youtube.com/watch?v=..."],
             ["Lab Audit Digital", "Simulasi Audit", "Akuntansi (S1)", "Dr. Budi", '{"VIDEO": 10, "QUIZ": 90}', "Manajemen Kas", "PDF", "https://example.com/modul.pdf"],
-            ["Lab Audit Digital", "Simulasi Audit", "Akuntansi (S1)", "Dr. Budi", '{"VIDEO": 10, "QUIZ": 90}', "Kuis Harian", "QUIZ", JSON.stringify([{ question: "1+1?", options: ["1", "2"], answer: 1 }])]
+            ["Lab Audit Digital", "Simulasi Audit", "Akuntansi (S1)", "Dr. Budi", '{"VIDEO": 10, "QUIZ": 90}', "Kuis Harian", "QUIZ", JSON.stringify([{ question: "1+1?", options: ["1", "2"], answer: 1 }])],
+            ["Lab Audit Digital", "Simulasi Audit", "Akuntansi (S1)", "Dr. Budi", '{"VIDEO": 10, "QUIZ": 90}', "Video Interaktif", "INTERACTIVE_VIDEO", JSON.stringify({ videoUrl: "https://youtu.be/xyz", questions: [{ timestamp: 30, question: "Q1?", options: ["A", "B"], answer: 0 }] })]
         ];
 
         const csvContent = "data:text/csv;charset=utf-8,"
