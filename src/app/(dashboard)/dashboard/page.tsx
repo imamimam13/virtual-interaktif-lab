@@ -62,43 +62,43 @@ export default async function DashboardPage({
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {labs.length > 0 ? (
                 labs.map((lab) => (
-                    <Card key={lab.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                        <div className="aspect-video w-full bg-zinc-100 relative overflow-hidden rounded-t-xl group">
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-zinc-800 text-gray-400">
-                                <BookOpen className="h-10 w-10 opacity-20" />
-                            </div>
-                            <div className="absolute top-2 right-2">
-                                <Badge variant="secondary" className="backdrop-blur bg-white/50">
-                                    {lab.department?.name || "General"}
-                                </Badge>
-                            </div>
-                        </div>
-                        <CardHeader>
-                            <CardTitle className="line-clamp-1">{lab.title}</CardTitle>
-                            <CardDescription className="line-clamp-2">
-                                {lab.description}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-1">
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                    <Clock className="h-4 w-4" />
-                                    <span>{lab._count?.modules || 0} Modul</span>
+                    <Link key={lab.id} href={`/dashboard/labs/${lab.id}`} className="block h-full">
+                        <Card className="flex flex-col h-full hover:shadow-lg transition-shadow">
+                            <div className="aspect-video w-full bg-zinc-100 relative overflow-hidden rounded-t-xl group">
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-zinc-800 text-gray-400">
+                                    <BookOpen className="h-10 w-10 opacity-20" />
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <Users className="h-4 w-4" />
-                                    <span>Siswa</span>
+                                <div className="absolute top-2 right-2">
+                                    <Badge variant="secondary" className="backdrop-blur bg-white/50">
+                                        {lab.department?.name || "General"}
+                                    </Badge>
                                 </div>
                             </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Link href={`/dashboard/labs/${lab.id}`} className="w-full">
-                                <Button className="w-full">
+                            <CardHeader>
+                                <CardTitle className="line-clamp-1">{lab.title}</CardTitle>
+                                <CardDescription className="line-clamp-2">
+                                    {lab.description}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-1">
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="h-4 w-4" />
+                                        <span>{lab._count?.modules || 0} Modul</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Users className="h-4 w-4" />
+                                        <span>Siswa</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                                <div className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
                                     Lihat Detail <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                            </Link>
-                        </CardFooter>
-                    </Card>
+                                </div>
+                            </CardFooter>
+                        </Card>
+                    </Link>
                 ))
             ) : (
                 <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
