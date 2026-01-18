@@ -7,25 +7,31 @@ import { z } from "zod";
 const LevelTitleSchema = z.object({
     level: z.coerce.number().min(1),
     title: z.string().min(3),
+    minXp: z.coerce.number().min(0),
 });
 
 export async function createLevelTitle(prevState: any, formData: FormData) {
     const validated = LevelTitleSchema.safeParse({
         level: formData.get("level"),
         title: formData.get("title"),
+        minXp: formData.get("minXp"),
     });
 
     if (!validated.success) {
-        return { message: "Invalid data: Level must be number, Title min 3 chars" };
+        return { message: "Invalid data: Check inputs" };
     }
 
     try {
         await prisma.levelTitle.upsert({
             where: { level: validated.data.level },
-            update: { title: validated.data.title },
+            update: {
+                title: validated.data.title,
+                minXp: validated.data.minXp
+            },
             create: {
                 level: validated.data.level,
                 title: validated.data.title,
+                minXp: validated.data.minXp
             }
         });
 

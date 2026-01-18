@@ -25,6 +25,10 @@ export default function GamificationForm() {
                 <Label htmlFor="title">Title Name</Label>
                 <Input id="title" name="title" placeholder="Ex: Research Assistant" required />
             </div>
+            <div className="grid gap-2">
+                <Label htmlFor="minXp">Minimum XP</Label>
+                <Input id="minXp" name="minXp" type="number" placeholder="Ex: 5000" required />
+            </div>
 
             {state?.message && (
                 <p className={`text-sm ${state.message.includes("success") ? "text-green-600" : "text-red-500"}`}>
