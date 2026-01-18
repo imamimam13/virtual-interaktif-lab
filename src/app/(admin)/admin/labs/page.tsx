@@ -57,13 +57,14 @@ export default async function AdminLabsPage() {
                     </div>
                 ) : (
                     labs.map((lab: { id: string; title: string; description: string; createdAt: Date; department: { name: string; } | null; _count: { modules: number; }; }) => (
-                        <Card key={lab.id} className="group hover:shadow-md transition-all">
-                            <CardHeader className="pb-4">
+                        <Card key={lab.id} className="group hover:shadow-md transition-all relative">
+                            <Link href={`/admin/labs/${lab.id}`} className="absolute inset-0 z-0" />
+                            <CardHeader className="pb-4 relative z-10">
                                 <div className="flex justify-between items-start gap-4">
-                                    <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-2xl">
+                                    <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-2xl pointer-events-none">
                                         🧪
                                     </div>
-                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity relative z-20">
                                         <Link href={`/admin/labs/${lab.id}/edit`}>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
                                                 <Pencil className="h-4 w-4" />
@@ -72,10 +73,10 @@ export default async function AdminLabsPage() {
                                         <DeleteLabButton id={lab.id} />
                                     </div>
                                 </div>
-                                <CardTitle className="mt-4 line-clamp-1" title={lab.title}>{lab.title}</CardTitle>
-                                <CardDescription className="line-clamp-2 h-10">{lab.description}</CardDescription>
+                                <CardTitle className="mt-4 line-clamp-1 pointer-events-none" title={lab.title}>{lab.title}</CardTitle>
+                                <CardDescription className="line-clamp-2 h-10 pointer-events-none">{lab.description}</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="relative z-10 pointer-events-none">
                                 <div className="flex flex-wrap gap-2 mb-4">
                                     {lab.department ? (
                                         <Badge variant="outline">{lab.department.name}</Badge>
