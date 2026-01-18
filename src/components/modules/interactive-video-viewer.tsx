@@ -178,6 +178,9 @@ export default function InteractiveVideoViewer({ content, onComplete }: Interact
                             {data.questions.map((q, idx) => {
                                 const isCompleted = completedQuestions.has(idx);
                                 const isCurrent = activeQuestionIndex === idx;
+                                const timeSec = Number(q.timestamp) || 0;
+                                const minutes = Math.floor(timeSec / 60);
+                                const seconds = (timeSec % 60).toString().padStart(2, '0');
 
                                 return (
                                     <div
@@ -196,7 +199,7 @@ export default function InteractiveVideoViewer({ content, onComplete }: Interact
                                         <div className="flex flex-col gap-1">
                                             <span className="font-semibold line-clamp-1">{q.question}</span>
                                             <div className="text-xs text-muted-foreground flex items-center">
-                                                <Play className="h-3 w-3 mr-1" /> {Math.floor(q.timestamp / 60)}:{(q.timestamp % 60).toString().padStart(2, '0')}
+                                                <Play className="h-3 w-3 mr-1" /> {minutes}:{seconds}
                                             </div>
                                         </div>
                                         {isCompleted ? <CheckCircle className="h-4 w-4 text-green-600" /> : <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />}

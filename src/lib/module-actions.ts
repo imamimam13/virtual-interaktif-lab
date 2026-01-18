@@ -45,6 +45,35 @@ export async function createModule(prevState: any, formData: FormData) {
     }
 }
 
+export async function updateModule(moduleId: string, prevState: any, formData: FormData) {
+    const validated = CreateModuleSchema.safeParse({
+        title: formData.get("title"),
+        type: formData.get("type"),
+        content: formData.get("content"),
+        labId: formData.get("labId"),
+    });
+
+    if (!validated.success) {
+        return { message: "Invalid module data" };
+    }
+
+    try {
+        await prisma.module.update({
+            where: { id: moduleId },
+            data: {
+                title: validated.data.title,
+                type: validated.data.type,
+                content: validated.data.content,
+            }
+        });
+
+        revalidatePath(`/admin/labs/${validated.data.labId}/modules`);
+        return { message: "Module updated successfully" };
+    } catch (e) {
+        return { message: "Failed to update module" };
+    }
+}
+
 export async function createModuleFromPdf(labId: string, fileUrl: string, fileName: string) {
     try {
         // Get max order

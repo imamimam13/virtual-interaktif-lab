@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Plus, ArrowLeft, FileText, Video, HelpCircle, Trash2 } from "lucide-react";
+import { Plus, ArrowLeft, FileText, Video, HelpCircle, Trash2, Edit } from "lucide-react";
 import Link from "next/link";
 import { deleteModule } from "@/lib/module-actions";
 import SmartPdfUploader from "@/components/admin/smart-pdf-uploader";
@@ -86,6 +86,11 @@ export default async function ModuleManagerPage({ params }: { params: Promise<{ 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <Link href={`/admin/labs/${labId}/modules/${module.id}/edit`}>
+                                        <Button variant="ghost" size="icon">
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
                                     <form action={handleDelete.bind(null, module.id)}>
                                         <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
                                             <Trash2 className="h-4 w-4" />
