@@ -19,8 +19,6 @@ export default async function GamificationPage() {
             <div className="grid gap-6 md:grid-cols-2">
 
 
-                // ...
-
                 {/* Form Add/Edit */}
                 <Card>
                     <CardHeader>
