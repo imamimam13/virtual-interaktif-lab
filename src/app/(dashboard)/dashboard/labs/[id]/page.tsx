@@ -124,7 +124,7 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
 
                             if (isEnrolled) {
                                 return (
-                                    <Link key={module.id} href={`/dashboard/labs/${lab.id}/modules/${module.id}`} className="block relative">
+                                    <Link key={module.id} href={`/dashboard/module/${module.id}`} className="block relative">
                                         {content}
                                     </Link>
                                 );
