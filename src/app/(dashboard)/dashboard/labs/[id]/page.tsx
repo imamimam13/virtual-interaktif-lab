@@ -43,8 +43,10 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
     const getIcon = (type: string) => {
         switch (type) {
             case "VIDEO": return <PlayCircle className="h-5 w-5 text-blue-500" />;
+            case "INTERACTIVE_VIDEO": return <PlayCircle className="h-5 w-5 text-purple-500" />;
             case "PDF": return <FileText className="h-5 w-5 text-red-500" />;
             case "QUIZ": return <HelpCircle className="h-5 w-5 text-yellow-500" />;
+            case "SIMULATION": return <CheckCircle2 className="h-5 w-5 text-green-500" />;
             default: return <FileText className="h-5 w-5" />;
         }
     };
@@ -95,29 +97,34 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
                             Belum ada materi di laboratorium ini.
                         </div>
                     ) : (
-                        lab.modules.map((module: any, index: number) => (
-                            <div key={module.id} className="relative">
-                                {!isEnrolled && (
-                                    <div className="absolute inset-0 bg-white/50 dark:bg-black/50 z-10 cursor-not-allowed flex items-center justify-center backdrop-blur-[1px]">
-                                        <Lock className="h-6 w-6 text-muted-foreground/50" />
-                                    </div>
-                                )}
-                                <Card className={`transition-colors ${isEnrolled ? "hover:border-primary/50 cursor-pointer" : "opacity-75"}`}>
-                                    <CardContent className="p-4 flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center font-bold text-muted-foreground">
-                                            {index + 1}
+                        lab.modules.map((module: any, index: number) => {
+                            const ModuleWrapper = isEnrolled ? Link : 'div';
+                            const wrapperProps = isEnrolled ? { href: `/dashboard/labs/${lab.id}/modules/${module.id}` } : {};
+
+                            return (
+                                <ModuleWrapper key={module.id} {...wrapperProps} className="block relative">
+                                    {!isEnrolled && (
+                                        <div className="absolute inset-0 bg-white/50 dark:bg-black/50 z-10 cursor-not-allowed flex items-center justify-center backdrop-blur-[1px]">
+                                            <Lock className="h-6 w-6 text-muted-foreground/50" />
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold">{module.title}</h3>
-                                            <p className="text-xs text-muted-foreground">{module.type}</p>
-                                        </div>
-                                        <Button variant="ghost" size="icon" disabled={!isEnrolled}>
-                                            {getIcon(module.type)}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        ))
+                                    )}
+                                    <Card className={`transition-colors ${isEnrolled ? "hover:border-primary/50 cursor-pointer" : "opacity-75"}`}>
+                                        <CardContent className="p-4 flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center font-bold text-muted-foreground">
+                                                {index + 1}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold">{module.title}</h3>
+                                                <p className="text-xs text-muted-foreground">{module.type}</p>
+                                            </div>
+                                            <Button variant="ghost" size="icon" disabled={!isEnrolled}>
+                                                {getIcon(module.type)}
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                </ModuleWrapper>
+                            );
+                        })
                     )}
                 </div>
 
