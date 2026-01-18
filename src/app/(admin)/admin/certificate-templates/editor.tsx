@@ -33,6 +33,8 @@ const INITIAL_ELEMENTS: VisualElement[] = [
     { id: '1', type: 'name', label: 'Nama Mahasiswa', x: 50, y: 40, fontSize: 32, color: '#000000', fontWeight: 'bold', textAlign: 'center' },
     { id: '2', type: 'lab', label: 'Nama Lab', x: 50, y: 50, fontSize: 24, color: '#333333', fontWeight: 'normal', textAlign: 'center' },
     { id: '3', type: 'code', label: 'Nomor Sertifikat', x: 50, y: 60, fontSize: 14, color: '#666666', fontWeight: 'normal', textAlign: 'center' },
+    { id: '4', type: 'instructor', label: 'Instruktur', x: 25, y: 80, fontSize: 16, color: '#000000', fontWeight: 'bold', textAlign: 'center' },
+    { id: '5', type: 'text', text: 'Ketua LPPM', label: 'LPPM', x: 75, y: 80, fontSize: 16, color: '#000000', fontWeight: 'bold', textAlign: 'center' },
 ];
 
 const MOCK_DATA = {

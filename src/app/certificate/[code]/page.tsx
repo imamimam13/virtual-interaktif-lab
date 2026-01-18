@@ -77,8 +77,14 @@ export default async function CertificatePage({ params }: { params: Promise<{ co
                 <p>Atas penyelesaian modul pembelajaran pada:</p>
                 <h2>${data.lab}</h2>
                 <p>Tanggal: ${data.date}</p>
-                <br/><br/>
-                <p><strong>${data.instructor}</strong><br/>Instruktur</p>
+                <div style="display: flex; justify-content: space-between; margin-top: 50px; padding: 0 50px;">
+                    <div style="text-align: center;">
+                        <p><strong>${data.instructor}</strong><br/>Instruktur / Kepala Lab</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <p><strong>LPPM</strong><br/>Universitas Wiralodra</p>
+                    </div>
+                </div>
             </div>
         `;
     }
