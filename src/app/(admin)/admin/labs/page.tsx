@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { deleteLab } from "@/lib/admin-actions";
+import DeleteLabButton from "@/components/admin/delete-lab-button";
 
 export default async function AdminLabsPage() {
     const labs = await prisma.lab.findMany({
@@ -63,17 +64,12 @@ export default async function AdminLabsPage() {
                                         🧪
                                     </div>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <form action={async () => {
-                                            "use server";
-                                            await deleteLab(lab.id);
-                                        }}>
-                                            <Button type="submit" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50">
-                                                <Trash2 className="h-4 w-4" />
+                                        <Link href={`/admin/labs/${lab.id}/edit`}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                                                <Pencil className="h-4 w-4" />
                                             </Button>
-                                        </form>
+                                        </Link>
+                                        <DeleteLabButton id={lab.id} />
                                     </div>
                                 </div>
                                 <CardTitle className="mt-4 line-clamp-1" title={lab.title}>{lab.title}</CardTitle>

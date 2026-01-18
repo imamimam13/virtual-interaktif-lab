@@ -78,6 +78,56 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
     redirect("/admin/labs");
 }
 
+export async function updateLab(prevState: LabFormState, formData: FormData): Promise<LabFormState> {
+    const rawData = {
+        id: formData.get("id") as string,
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        departmentId: formData.get("departmentId") as string,
+        isIndependent: formData.get("isIndependent"),
+    };
+
+    console.log("updateLab Action Received:", rawData);
+
+    const validatedFields = CreateLabSchema.safeParse({
+        title: rawData.title,
+        description: rawData.description,
+        departmentId: rawData.departmentId,
+        isIndependent: rawData.isIndependent,
+    });
+
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: "Missing Fields. Failed to Update Lab.",
+            payload: rawData as any,
+        };
+    }
+
+    const { title, description, departmentId, isIndependent } = validatedFields.data;
+
+    try {
+        await prisma.lab.update({
+            where: { id: rawData.id },
+            data: {
+                title,
+                description,
+                departmentId: isIndependent ? null : departmentId,
+            },
+        });
+    } catch (error) {
+        console.error("Database Error:", error);
+        return {
+            message: "Database Error: Failed to Update Lab.",
+            payload: rawData as any,
+        };
+    }
+
+    revalidatePath("/admin/labs");
+    revalidatePath("/dashboard");
+    redirect("/admin/labs");
+}
+
 export async function deleteLab(id: string) {
     try {
         await prisma.lab.delete({ where: { id } });

@@ -12,10 +12,10 @@ export default function LandingPage() {
           <span className="font-bold text-xl tracking-tight">VirtualLab<span className="text-primary">.UWB</span></span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link className="text-sm font-medium hover:text-primary transition-colors" href="#">
+          <Link className="text-sm font-medium hover:text-primary transition-colors" href="#features">
             Features
           </Link>
-          <Link className="text-sm font-medium hover:text-primary transition-colors" href="#">
+          <Link className="text-sm font-medium hover:text-primary transition-colors" href="/dashboard">
             Labs
           </Link>
           <Link href="/auth/login">
@@ -58,7 +58,7 @@ export default function LandingPage() {
         </section>
 
         {/* Features Grid */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-50 dark:bg-gray-900/50">
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-gray-50 dark:bg-gray-900/50">
           <div className="container px-4 md:px-6 mx-auto">
             <div className="grid gap-10 sm:px-10 md:gap-16 md:grid-cols-3">
               <div className="space-y-4 text-center">
