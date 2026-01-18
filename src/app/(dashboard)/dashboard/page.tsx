@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Clock, Users, Trophy } from "lucide-react";
 import { getServerSession } from "next-auth";
@@ -37,8 +38,10 @@ export default async function DashboardPage({
         orderBy: { createdAt: 'desc' }
     });
 
-    // Fetch Enrolled Labs
+    // Fetch User Data for XP & Enrolled Labs
     let enrolledLabs: any[] = [];
+    let totalXp = 0;
+
     if (userEmail) {
         const user = await prisma.user.findUnique({
             where: { email: userEmail },
@@ -52,11 +55,22 @@ export default async function DashboardPage({
                             }
                         }
                     }
+                },
+                moduleProgress: {
+                    select: { score: true }
                 }
             }
         });
         enrolledLabs = user?.enrollments.map((e: any) => e.lab) || [];
+        totalXp = user?.moduleProgress.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0;
     }
+
+    // XP Logic
+    const XP_PER_LEVEL = 1000;
+    const currentLevel = Math.floor(totalXp / XP_PER_LEVEL) + 1;
+    const nextLevelXp = currentLevel * XP_PER_LEVEL;
+    const currentLevelBaseXp = (currentLevel - 1) * XP_PER_LEVEL;
+    const progressToNextLevel = ((totalXp - currentLevelBaseXp) / XP_PER_LEVEL) * 100;
 
     const LabGrid = ({ labs, emptyMessage }: { labs: any[], emptyMessage: string }) => (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -133,14 +147,21 @@ export default async function DashboardPage({
                         <p className="text-xs text-muted-foreground">Lab diikuti</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">XP Terkumpul</CardTitle>
-                        <Trophy className="h-4 w-4 text-muted-foreground" />
+                <Card className="col-span-1 md:col-span-2 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-orange-500/10" />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+                        <CardTitle className="text-sm font-medium">Level {currentLevel}</CardTitle>
+                        <Trophy className="h-4 w-4 text-yellow-500" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">0</div>
-                        <p className="text-xs text-muted-foreground">Level 1 Rookie</p>
+                    <CardContent className="relative">
+                        <div className="flex justify-between items-end mb-2">
+                            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">{totalXp.toLocaleString()} XP</div>
+                            <div className="text-xs text-muted-foreground">Next: {nextLevelXp.toLocaleString()} XP</div>
+                        </div>
+                        <Progress value={progressToNextLevel} className="h-2" />
+                        <p className="text-xs text-muted-foreground mt-2">
+                            Raih {nextLevelXp - totalXp} XP lagi untuk naik ke Level {currentLevel + 1}
+                        </p>
                     </CardContent>
                 </Card>
             </div>

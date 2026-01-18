@@ -112,3 +112,32 @@ export async function deleteModule(id: string, labId: string) {
         return { message: "Failed to delete module" };
     }
 }
+
+export async function markModuleComplete(moduleId: string, userId: string, score: number = 0) {
+    try {
+        await prisma.moduleProgress.upsert({
+            where: {
+                userId_moduleId: {
+                    userId,
+                    moduleId
+                }
+            },
+            update: {
+                completed: true,
+                score: score > 0 ? score : undefined
+            },
+            create: {
+                userId,
+                moduleId,
+                completed: true,
+                score: score > 0 ? score : undefined
+            }
+        });
+
+        revalidatePath(`/dashboard/module/${moduleId}`);
+        return { success: true };
+    } catch (e) {
+        console.error("Error marking module complete:", e);
+        return { success: false };
+    }
+}

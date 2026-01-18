@@ -27,7 +27,11 @@ interface ModuleViewerProps {
     userId: string;
 }
 
-export default function ModuleViewer({ currentModule, allModules, labId }: ModuleViewerProps) {
+import { markModuleComplete } from "@/lib/module-actions";
+
+// ... (existing imports)
+
+export default function ModuleViewer({ currentModule, allModules, labId, userId }: ModuleViewerProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Find prev/next
@@ -35,12 +39,16 @@ export default function ModuleViewer({ currentModule, allModules, labId }: Modul
     const prevModule = currentIndex > 0 ? allModules[currentIndex - 1] : null;
     const nextModule = currentIndex < allModules.length - 1 ? allModules[currentIndex + 1] : null;
 
+    const handleComplete = async (score: number = 0) => {
+        await markModuleComplete(currentModule.id, userId, score);
+    };
+
     const renderContent = () => {
         switch (currentModule.type) {
             case "VIDEO":
-                return <VideoPlayer content={currentModule.content} onComplete={() => { }} />;
+                return <VideoPlayer content={currentModule.content} onComplete={() => handleComplete()} />;
             case "PDF":
-                return <PdfViewer content={currentModule.content} onComplete={() => { }} />;
+                return <PdfViewer content={currentModule.content} onComplete={() => handleComplete()} />;
             case "QUIZ":
                 // Parse quiz content safely
                 let quizData = [];
@@ -49,11 +57,11 @@ export default function ModuleViewer({ currentModule, allModules, labId }: Modul
                 } catch (e) {
                     console.error("Invalid Quiz JSON", e);
                 }
-                return <QuizRunner questions={quizData} onComplete={() => { }} />;
+                return <QuizRunner questions={quizData} onComplete={(score) => handleComplete(score)} />;
             case "SIMULATION":
                 return <SimulationViewer url={currentModule.content} />;
             case "INTERACTIVE_VIDEO":
-                return <InteractiveVideoViewer content={currentModule.content} onComplete={() => { }} />;
+                return <InteractiveVideoViewer content={currentModule.content} onComplete={() => handleComplete()} />;
             default:
                 return <div>Unsupported Module Type</div>;
         }

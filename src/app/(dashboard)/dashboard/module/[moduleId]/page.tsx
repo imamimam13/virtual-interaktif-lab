@@ -24,22 +24,32 @@ export default async function ModulePage({ params }: { params: Promise<{ moduleI
     if (!currentModule) notFound();
 
     // Fetch all modules in this lab to calculate next/prev
+    // Fetch all modules in this lab to calculate next/prev
     const allModules = await prisma.module.findMany({
         where: { labId: currentModule.labId },
         orderBy: { order: 'asc' }
     });
 
-    // Add 'completed' flag stub (will implement real progress check later)
+    // Fetch User Progress for these modules
+    const userProgress = await prisma.moduleProgress.findMany({
+        where: {
+            userId: user.id,
+            moduleId: { in: allModules.map(m => m.id) }
+        }
+    });
+
+    const progressMap = new Map(userProgress.map(p => [p.moduleId, p.completed]));
+
     const modulesWithProgress = allModules.map((m: any) => ({
         ...m,
-        completed: false // Placeholder for now
+        completed: progressMap.get(m.id) || false
     }));
 
     // Convert generic type to specific union
     const validTypeModule = {
         ...currentModule,
-        type: currentModule.type as "VIDEO" | "PDF" | "QUIZ",
-        completed: false
+        type: currentModule.type as "VIDEO" | "PDF" | "QUIZ" | "SIMULATION" | "INTERACTIVE_VIDEO",
+        completed: progressMap.get(currentModule.id) || false
     };
 
     return (
