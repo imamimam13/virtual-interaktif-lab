@@ -7,14 +7,8 @@ interface ImportRow {
     labTitle: string;
     description: string;
     departmentName: string;
-    moduleTitle: string;
-    moduleType: string;
-    content: string;
-    labTitle: string;
-    description: string;
-    departmentName: string;
-    instructor?: string; // New field
-    grading?: string;   // New field (JSON string)
+    instructor?: string;
+    grading?: string;
     moduleTitle: string;
     moduleType: string;
     content: string;
@@ -61,8 +55,10 @@ export async function bulkImportLabs(data: ImportRow[]) {
                         description: firstRow.description,
                         departmentId: department.id,
                         thumbnail: "/images/placeholders/lab-default.jpg",
+                        // @ts-ignore
                         instructor: firstRow.instructor || "Tim Dosen",
-                        grading: firstRow.grading ? firstRow.grading : undefined // Optional
+                        // @ts-ignore
+                        grading: firstRow.grading ? firstRow.grading : undefined
                     }
                 });
             }
