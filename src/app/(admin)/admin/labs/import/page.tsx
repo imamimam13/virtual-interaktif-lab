@@ -48,6 +48,8 @@ export default function ImportPage() {
             labTitle: row["LabTitle"] || row["labTitle"],
             description: row["Description"] || row["description"],
             departmentName: row["Department (Exact Name)"] || row["Department"],
+            instructor: row["Instructor"] || row["instructor"],
+            grading: row["Grading (JSON)"] || row["Grading"],
             moduleTitle: row["ModuleTitle"] || row["moduleTitle"],
             moduleType: row["Type (VIDEO/PDF/QUIZ)"] || row["Type"],
             content: row["Content (URL or Quiz JSON)"] || row["Content"]
