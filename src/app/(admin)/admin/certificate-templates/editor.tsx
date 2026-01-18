@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Slider } from "@/components/ui/slider";
+
 import { Loader2, Save, ArrowLeft, RefreshCw, Type, Image as ImageIcon, Move } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useState, useEffect, useRef } from "react";
@@ -282,11 +282,15 @@ export default function TemplateEditor({ template }: { template?: any }) {
                                         )}
                                         <div className="space-y-2">
                                             <Label>Font Size: {elements.find(el => el.id === selectedElementId)?.fontSize}px</Label>
-                                            <Slider
-                                                value={[elements.find(el => el.id === selectedElementId)?.fontSize || 16]}
-                                                onValueChange={(v) => updateSelectedElement('fontSize', v[0])}
-                                                min={8} max={72} step={1}
-                                            />
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="range"
+                                                    min="8" max="72" step="1"
+                                                    value={elements.find(el => el.id === selectedElementId)?.fontSize || 16}
+                                                    onChange={(e) => updateSelectedElement('fontSize', parseInt(e.target.value))}
+                                                    className="w-full"
+                                                />
+                                            </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div className="space-y-2">
