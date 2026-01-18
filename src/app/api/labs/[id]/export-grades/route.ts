@@ -2,8 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-    const labId = params.id;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id: labId } = await params;
 
     // Fetch enrollments with user data and module progress
     const enrollments = await prisma.enrollment.findMany({
