@@ -7,5 +7,10 @@ export default async function CreateLabPage() {
         orderBy: { name: 'asc' }
     });
 
-    return <CreateLabForm departments={departments} />;
+    const templates = await prisma.certificateTemplate.findMany({
+        orderBy: { name: 'asc' },
+        select: { id: true, name: true, isDefault: true }
+    });
+
+    return <CreateLabForm departments={departments} templates={templates} />;
 }

@@ -135,6 +135,39 @@ export async function markModuleComplete(moduleId: string, userId: string, score
         });
 
         revalidatePath(`/dashboard/module/${moduleId}`);
+
+        // Check for Lab Completion & Generate Certificate
+        const module = await prisma.module.findUnique({ where: { id: moduleId }, include: { lab: true } });
+        if (module) {
+            const labId = module.labId;
+            const totalModules = await prisma.module.count({ where: { labId } });
+            const completedModules = await prisma.moduleProgress.count({
+                where: {
+                    userId,
+                    module: { labId },
+                    completed: true
+                }
+            });
+
+            if (completedModules === totalModules) {
+                const existingCert = await prisma.certificate.findUnique({
+                    where: { userId_labId: { userId, labId } }
+                });
+
+                if (!existingCert) {
+                    const code = `CERT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                    await prisma.certificate.create({
+                        data: {
+                            userId,
+                            labId,
+                            labTitle: module.lab.title,
+                            code
+                        }
+                    });
+                }
+            }
+        }
+
         return { success: true };
     } catch (e) {
         console.error("Error marking module complete:", e);

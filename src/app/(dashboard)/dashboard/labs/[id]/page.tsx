@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, PlayCircle, FileText, HelpCircle, Lock, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, PlayCircle, FileText, HelpCircle, Lock, CheckCircle2, Trophy } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -39,6 +39,19 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
     }
 
     const isEnrolled = lab.enrollments.length > 0;
+
+    // Fetch progress stats
+    const completionStats = await prisma.moduleProgress.count({
+        where: {
+            userId: user.id,
+            module: { labId: id },
+            completed: true
+        }
+    });
+
+    const certificate = await prisma.certificate.findUnique({
+        where: { userId_labId: { userId: user.id, labId: id } }
+    });
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -150,12 +163,25 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span>Selesai</span>
-                                        <span className="font-bold">0 / {lab.modules.length}</span>
+                                        <span className="font-bold">{completionStats} / {lab.modules.length}</span>
                                     </div>
                                     <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                        <div className="h-full bg-green-500 w-0" />
+                                        <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${(completionStats / lab.modules.length) * 100}%` }} />
                                     </div>
-                                    <p className="text-xs text-muted-foreground pt-2">Selesaikan semua modul untuk mendapatkan sertifikat.</p>
+                                    {certificate ? (
+                                        <div className="pt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                            <p className="text-xs text-green-600 font-medium mb-2 flex items-center gap-1">
+                                                <CheckCircle2 className="h-3 w-3" /> Selamat! Anda telah lulus.
+                                            </p>
+                                            <Link href={`/certificate/${certificate.code}`} target="_blank">
+                                                <Button className="w-full bg-yellow-600 hover:bg-yellow-700 text-white shadow-md hover:shadow-lg transition-all">
+                                                    <Trophy className="mr-2 h-4 w-4" /> Download Sertifikat
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground pt-2">Selesaikan semua modul untuk mendapatkan sertifikat.</p>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

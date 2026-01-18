@@ -19,11 +19,18 @@ type Department = {
     name: string;
 };
 
+type Template = {
+    id: string;
+    name: string;
+    isDefault: boolean;
+};
+
 type LabData = {
     id: string;
     title: string;
     description: string;
     departmentId: string | null;
+    certificateTemplateId?: string | null;
     thumbnail: string | null;
     instructor: string | null;
     grading: string | null;
@@ -40,7 +47,7 @@ function SubmitButton({ isEdit }: { isEdit: boolean }) {
     );
 }
 
-export default function LabForm({ departments, initialData }: { departments: Department[], initialData?: LabData }) {
+export default function LabForm({ departments, templates, initialData }: { departments: Department[], templates?: Template[], initialData?: LabData }) {
     const isEdit = !!initialData;
     const [isIndependent, setIsIndependent] = useState(initialData ? !initialData.departmentId : false);
 
@@ -137,6 +144,24 @@ export default function LabForm({ departments, initialData }: { departments: Dep
                                 </Select>
                             </div>
                         )}
+
+                        <div className="grid gap-2">
+                            <Label>Template Sertifikat</Label>
+                            <Select name="certificateTemplateId" defaultValue={state?.payload?.certificateTemplateId || initialData?.certificateTemplateId || "default"}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih Template..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="default">Default System</SelectItem>
+                                    {templates?.map((t) => (
+                                        <SelectItem key={t.id} value={t.id}>
+                                            {t.name} {t.isDefault ? "(Default)" : ""}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">Template yang akan digunakan untuk sertifikat kelulusan lab ini.</p>
+                        </div>
 
                         <div className="space-y-2 border-t pt-4">
                             <Label>Konfigurasi Penilaian (Grading System)</Label>

@@ -17,5 +17,10 @@ export default async function EditLabPage({ params }: { params: Promise<{ id: st
         select: { id: true, name: true },
     });
 
-    return <LabForm departments={departments} initialData={lab} />;
+    const templates = await prisma.certificateTemplate.findMany({
+        orderBy: { name: 'asc' },
+        select: { id: true, name: true, isDefault: true }
+    });
+
+    return <LabForm departments={departments} templates={templates} initialData={lab} />;
 }

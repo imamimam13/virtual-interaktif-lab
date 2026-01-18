@@ -26,6 +26,7 @@ model User {
   department   Department? @relation(fields: [departmentId], references: [id])
   enrollments Enrollment[]
   moduleProgress ModuleProgress[]
+  certificates Certificate[]
 }
 
 model Department {
@@ -49,11 +50,28 @@ model Lab {
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
   modules      Module[]
+  certificates Certificate[]
+  
+  certificateTemplateId String?
+  certificateTemplate   CertificateTemplate? @relation(fields: [certificateTemplateId], references: [id])
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
   enrollments Enrollment[]
+}
+
+model CertificateTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  html      String   // @db.Text in postgres, default String in sqlite
+  css       String   // @db.Text
+  isDefault Boolean  @default(false)
+  
+  labs      Lab[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Module {
@@ -91,6 +109,29 @@ model Enrollment {
   joinedAt  DateTime @default(now())
   completedAt DateTime?
 
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lab       Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, labId])
+}
+
+model LevelTitle {
+  id        String   @id @default(cuid())
+  level     Int      @unique
+  title     String
+  minXp     Int      // Optional helpers
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Certificate {
+  id        String   @id @default(cuid())
+  userId    String
+  labId     String
+  labTitle  String 
+  issuedAt  DateTime @default(now())
+  code      String   @unique // C-USERID-LABID-RANDOM
+  
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lab       Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
 

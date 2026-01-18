@@ -12,7 +12,9 @@ import {
     Menu,
     ChevronLeft,
     LogOut,
-    ShieldAlert
+    ShieldAlert,
+    Trophy,
+    FileCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -26,6 +28,8 @@ const adminSidebarItems = [
     { icon: FlaskConical, label: "Kelola Lab", href: "/admin/labs" },
     { icon: Users, label: "Pengguna", href: "/admin/users" },
     { icon: FlaskConical, label: "Prodi / Jurusan", href: "/admin/departments" },
+    { icon: Trophy, label: "Gamification", href: "/admin/gamification" },
+    { icon: FileCode, label: "Certificate Templates", href: "/admin/certificate-templates" },
     { icon: Settings, label: "Pengaturan Platform", href: "/admin/settings" },
 ];
 

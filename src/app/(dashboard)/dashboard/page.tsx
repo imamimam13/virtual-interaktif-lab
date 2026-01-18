@@ -27,8 +27,58 @@ export default async function DashboardPage({
         redirect("/admin/dashboard");
     }
 
-    // Fetch All Labs
+    // Fetch User Data First to Determine Department
+    let enrolledLabs: any[] = [];
+    let totalXp = 0;
+
+    // Use explicit precise typing or any to bypass the stale-client issue
+    const user = userEmail ? await prisma.user.findUnique({
+        where: { email: userEmail },
+        include: {
+            enrollments: {
+                include: {
+                    lab: {
+                        include: {
+                            department: true,
+                            _count: { select: { modules: true } }
+                        }
+                    }
+                }
+            },
+            moduleProgress: {
+                select: { score: true }
+            }
+        }
+    }) : null;
+
+    if (user) {
+        enrolledLabs = user.enrollments.map((e: any) => e.lab) || [];
+        totalXp = user.moduleProgress.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0;
+    }
+
+    // Determine Lab Filter
+    const isAdmin = session?.user?.role === "ADMIN";
+    const userDeptId = (user as any)?.departmentId;
+
+    const labFilter = isAdmin
+        ? {} // Admin sees all
+        : {
+            OR: [
+                { departmentId: userDeptId || undefined }, // Lab matching user dept
+                { departmentId: null } // Independent / General Labs
+            ]
+        };
+
+    // If user has no dept and is not admin, only show independent labs
+    if (!isAdmin && !userDeptId) {
+        Object.assign(labFilter, {
+            OR: [{ departmentId: null }]
+        });
+    }
+
+    // Fetch Filtered Labs
     const allLabs = await prisma.lab.findMany({
+        where: labFilter,
         include: {
             department: true,
             _count: {
@@ -38,39 +88,19 @@ export default async function DashboardPage({
         orderBy: { createdAt: 'desc' }
     });
 
-    // Fetch User Data for XP & Enrolled Labs
-    let enrolledLabs: any[] = [];
-    let totalXp = 0;
-
-    if (userEmail) {
-        const user = await prisma.user.findUnique({
-            where: { email: userEmail },
-            include: {
-                enrollments: {
-                    include: {
-                        lab: {
-                            include: {
-                                department: true,
-                                _count: { select: { modules: true } }
-                            }
-                        }
-                    }
-                },
-                moduleProgress: {
-                    select: { score: true }
-                }
-            }
-        });
-        enrolledLabs = user?.enrollments.map((e: any) => e.lab) || [];
-        totalXp = user?.moduleProgress.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0;
-    }
-
     // XP Logic
     const XP_PER_LEVEL = 1000;
     const currentLevel = Math.floor(totalXp / XP_PER_LEVEL) + 1;
     const nextLevelXp = currentLevel * XP_PER_LEVEL;
     const currentLevelBaseXp = (currentLevel - 1) * XP_PER_LEVEL;
     const progressToNextLevel = ((totalXp - currentLevelBaseXp) / XP_PER_LEVEL) * 100;
+
+    // Fetch Dynamic Title
+    const levelTitleRecord = await (prisma as any).levelTitle.findFirst({
+        where: { level: { lte: currentLevel } },
+        orderBy: { level: 'desc' }
+    });
+    const userTitle = levelTitleRecord?.title || "Rookie";
 
     const LabGrid = ({ labs, emptyMessage }: { labs: any[], emptyMessage: string }) => (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -127,7 +157,12 @@ export default async function DashboardPage({
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Selamat Datang, {session.user?.name || "Mahasiswa"}!</h2>
-                    <p className="text-muted-foreground">Lanjutkan progress belajar di Laboratorium Virtual.</p>
+                    <p className="text-muted-foreground flex items-center gap-2">
+                        <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50">
+                            {userTitle}
+                        </Badge>
+                        Lanjutkan progress belajar di Laboratorium Virtual.
+                    </p>
                 </div>
                 <Link href="/dashboard/labs">
                     <Button variant="outline">
@@ -160,7 +195,7 @@ export default async function DashboardPage({
                         </div>
                         <Progress value={progressToNextLevel} className="h-2" />
                         <p className="text-xs text-muted-foreground mt-2">
-                            Raih {nextLevelXp - totalXp} XP lagi untuk naik ke Level {currentLevel + 1}
+                            {userTitle} • {nextLevelXp - totalXp} XP lagi ke Level {currentLevel + 1}
                         </p>
                     </CardContent>
                 </Card>

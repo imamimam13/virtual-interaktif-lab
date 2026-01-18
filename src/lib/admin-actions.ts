@@ -9,6 +9,7 @@ const CreateLabSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters"),
     description: z.string().min(10, "Description must be at least 10 characters"),
     departmentId: z.string().optional().nullable().transform(val => val === "" ? null : val),
+    certificateTemplateId: z.string().optional().nullable().transform(val => val === "" ? null : val),
     isIndependent: z.coerce.boolean(),
     instructor: z.string().optional(),
     grading: z.string().optional(), // JSON
@@ -19,6 +20,7 @@ export type LabFormState = {
         title?: string[];
         description?: string[];
         departmentId?: string[];
+        certificateTemplateId?: string[];
         isIndependent?: string[];
         instructor?: string[];
         grading?: string[];
@@ -28,6 +30,7 @@ export type LabFormState = {
         title: string;
         description: string;
         departmentId: string;
+        certificateTemplateId?: string;
         isIndependent: File | string | null;
         instructor?: string;
         grading?: string;
@@ -39,6 +42,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         departmentId: formData.get("departmentId") as string,
+        certificateTemplateId: formData.get("certificateTemplateId") as string,
         isIndependent: formData.get("isIndependent"),
         instructor: formData.get("instructor") as string,
         grading: formData.get("grading") as string,
@@ -50,6 +54,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         title: rawData.title,
         description: rawData.description,
         departmentId: rawData.departmentId,
+        certificateTemplateId: rawData.certificateTemplateId,
         isIndependent: rawData.isIndependent,
         instructor: rawData.instructor,
         grading: rawData.grading,
@@ -64,7 +69,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         };
     }
 
-    const { title, description, departmentId, isIndependent, instructor, grading } = validatedFields.data;
+    const { title, description, departmentId, certificateTemplateId, isIndependent, instructor, grading } = validatedFields.data;
 
     try {
         await prisma.lab.create({
@@ -72,6 +77,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
                 title,
                 description,
                 departmentId: isIndependent ? null : departmentId,
+                certificateTemplateId: certificateTemplateId || null,
                 thumbnail: "/images/placeholders/lab-default.jpg",
                 instructor,
                 grading
@@ -96,6 +102,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         departmentId: formData.get("departmentId") as string,
+        certificateTemplateId: formData.get("certificateTemplateId") as string,
         isIndependent: formData.get("isIndependent"),
         instructor: formData.get("instructor") as string,
         grading: formData.get("grading") as string,
@@ -107,6 +114,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         title: rawData.title,
         description: rawData.description,
         departmentId: rawData.departmentId,
+        certificateTemplateId: rawData.certificateTemplateId,
         isIndependent: rawData.isIndependent,
         instructor: rawData.instructor,
         grading: rawData.grading,
@@ -120,7 +128,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         };
     }
 
-    const { title, description, departmentId, isIndependent, instructor, grading } = validatedFields.data;
+    const { title, description, departmentId, certificateTemplateId, isIndependent, instructor, grading } = validatedFields.data;
 
     try {
         await prisma.lab.update({
@@ -129,6 +137,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
                 title,
                 description,
                 departmentId: isIndependent ? null : departmentId,
+                certificateTemplateId: certificateTemplateId || null,
                 instructor,
                 grading
             },
