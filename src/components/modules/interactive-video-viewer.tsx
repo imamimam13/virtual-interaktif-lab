@@ -199,8 +199,8 @@ export default function InteractiveVideoViewer({ content, onComplete }: Interact
 
                 {/* POPUP QUESTION OVERLAY */}
                 {/* We use absolute positioning inside this column to act as a "modal" over the sidebar or screen */}
-                <Dialog open={!!activeQuestion} onOpenChange={(open) => !open && handleResume()}>
-                    <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
+                <Dialog open={!!activeQuestion} onOpenChange={(open: boolean) => !open && handleResume()}>
+                    <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e: any) => e.preventDefault()}>
                         <DialogHeader>
                             <DialogTitle>Pertanyaan Interaktif</DialogTitle>
                         </DialogHeader>
