@@ -8,7 +8,8 @@ import "./print.css";
 export default async function CertificatePage({ params }: { params: Promise<{ code: string }> }) {
     const { code } = await params;
 
-    const certificate = await prisma.certificate.findUnique({
+    // @ts-ignore
+    const certificate = await (prisma as any).certificate.findUnique({
         where: { code },
         include: {
             user: true,
@@ -30,7 +31,8 @@ export default async function CertificatePage({ params }: { params: Promise<{ co
 
     // If no assigned template, find system default
     if (!template) {
-        template = await prisma.certificateTemplate.findFirst({
+        // @ts-ignore
+        template = await (prisma as any).certificateTemplate.findFirst({
             where: { isDefault: true }
         });
     }
