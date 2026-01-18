@@ -15,9 +15,10 @@ function ModuleIcon({ type }: { type: string }) {
     }
 }
 
-export default async function LabDetailsPage({ params }: { params: { id: string } }) {
+export default async function LabDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const lab = await prisma.lab.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
             modules: { orderBy: { order: 'asc' } },
             department: true,
