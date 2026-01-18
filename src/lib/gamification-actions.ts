@@ -22,7 +22,7 @@ export async function createLevelTitle(prevState: any, formData: FormData) {
     }
 
     try {
-        await prisma.levelTitle.upsert({
+        await (prisma as any).levelTitle.upsert({
             where: { level: validated.data.level },
             update: {
                 title: validated.data.title,
@@ -44,7 +44,7 @@ export async function createLevelTitle(prevState: any, formData: FormData) {
 
 export async function deleteLevelTitle(level: number) {
     try {
-        await prisma.levelTitle.delete({ where: { level } });
+        await (prisma as any).levelTitle.delete({ where: { level } });
         revalidatePath("/admin/gamification");
         return { message: "Deleted successfully" };
     } catch (e) {
