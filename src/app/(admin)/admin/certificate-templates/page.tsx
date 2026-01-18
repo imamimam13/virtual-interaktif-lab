@@ -31,7 +31,7 @@ export default async function CertificateTemplatesPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {templates.map((template) => (
+                {templates.map((template: any) => (
                     <Card key={template.id} className="flex flex-col">
                         <CardHeader>
                             <div className="flex justify-between items-start">
