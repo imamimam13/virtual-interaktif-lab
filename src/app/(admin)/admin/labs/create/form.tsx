@@ -52,7 +52,21 @@ function SubmitButton({ isEdit }: { isEdit: boolean }) {
     );
 }
 
-export default function LabForm({ departments, templates, initialData, role = "LECTURER" }: { departments: Department[], templates?: Template[], initialData?: LabData, role?: string }) {
+export default function LabForm({
+    departments,
+    templates,
+    initialData,
+    role = "LECTURER",
+    defaultDosenFee = 50,
+    defaultLppmFee = 10
+}: {
+    departments: Department[],
+    templates?: Template[],
+    initialData?: LabData,
+    role?: string,
+    defaultDosenFee?: number,
+    defaultLppmFee?: number
+}) {
     const isEdit = !!initialData;
     const isLecturer = role === "LECTURER";
     const [isIndependent, setIsIndependent] = useState(initialData ? !initialData.departmentId : false);
@@ -190,13 +204,13 @@ export default function LabForm({ departments, templates, initialData, role = "L
                                 <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-sm text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                                     <strong>Ketentuan Revenue Sharing:</strong>
                                     <ul className="list-disc list-inside mt-1">
-                                        <li>Fee Instruktur: 50%</li>
-                                        <li>Fee LPPM: 10%</li>
-                                        <li>Fee Platform (Admin): 40%</li>
+                                        <li>Fee Instruktur: {defaultDosenFee}%</li>
+                                        <li>Fee LPPM: {defaultLppmFee}%</li>
+                                        <li>Fee Platform (Admin): {100 - defaultDosenFee - defaultLppmFee}%</li>
                                     </ul>
                                     <p className="mt-2 text-xs">Hubungi Admin jika Anda memiliki kesepakatan khusus.</p>
-                                    <input type="hidden" name="feePercentage" value="50" />
-                                    <input type="hidden" name="lppmFeePercentage" value="10" />
+                                    <input type="hidden" name="feePercentage" value={defaultDosenFee} />
+                                    <input type="hidden" name="lppmFeePercentage" value={defaultLppmFee} />
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">

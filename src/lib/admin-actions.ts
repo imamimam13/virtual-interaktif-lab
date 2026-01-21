@@ -109,8 +109,13 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         // Enforce rules for Lecturers
         finalRequestedPrice = price; // Store requested price
         finalPrice = 0; // Force Free until approved
-        finalFee = 50;  // Force Default
-        finalLppmFee = 10; // Force Default
+
+        // Fetch System Defaults
+        const systemDosenFee = await getSystemConfig("DEFAULT_DOSEN_FEE");
+        const systemLppmFee = await getSystemConfig("DEFAULT_LPPM_FEE");
+
+        finalFee = systemDosenFee ? parseInt(systemDosenFee) : 50;
+        finalLppmFee = systemLppmFee ? parseInt(systemLppmFee) : 10;
     }
 
     try {
@@ -208,8 +213,11 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         }
 
         // Lecturers cannot change fees
-        finalFee = 50;
-        finalLppmFee = 10;
+        const systemDosenFee = await getSystemConfig("DEFAULT_DOSEN_FEE");
+        const systemLppmFee = await getSystemConfig("DEFAULT_LPPM_FEE");
+
+        finalFee = systemDosenFee ? parseInt(systemDosenFee) : 50;
+        finalLppmFee = systemLppmFee ? parseInt(systemLppmFee) : 10;
     } else {
         // Admin edits:
         // If Admin sets a price, we assume it's approved.
@@ -449,5 +457,26 @@ export async function rejectLab(labId: string) {
         return { message: "Lab price request rejected" };
     } catch (error) {
         return { message: "Failed to reject lab" };
+    }
+}
+
+export async function getSystemConfig(key: string): Promise<string | null> {
+    const config = await prisma.systemConfig.findUnique({
+        where: { key }
+    });
+    return config?.value || null;
+}
+
+export async function updateSystemConfig(key: string, value: string) {
+    try {
+        await prisma.systemConfig.upsert({
+            where: { key },
+            update: { value },
+            create: { key, value }
+        });
+        revalidatePath("/admin/settings");
+        return { message: "Configuration updated" };
+    } catch (error) {
+        return { message: "Failed to update configuration" };
     }
 }

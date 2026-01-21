@@ -166,3 +166,8 @@ model Certificate {
 
   @@unique([userId, labId])
 }
+
+model SystemConfig {
+  key   String @id
+  value String
+}

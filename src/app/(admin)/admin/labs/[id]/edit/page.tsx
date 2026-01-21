@@ -3,6 +3,7 @@ import LabForm from "@/app/(admin)/admin/labs/create/form";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getSystemConfig } from "@/lib/admin-actions";
 
 export default async function EditLabPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -27,5 +28,17 @@ export default async function EditLabPage({ params }: { params: Promise<{ id: st
     const session = await getServerSession(authOptions);
     const role = session?.user?.role || "LECTURER";
 
-    return <LabForm departments={departments} templates={templates} initialData={lab} role={role} />;
+    const defaultDosenFee = parseInt((await getSystemConfig("DEFAULT_DOSEN_FEE")) || "50");
+    const defaultLppmFee = parseInt((await getSystemConfig("DEFAULT_LPPM_FEE")) || "10");
+
+    return (
+        <LabForm
+            departments={departments}
+            templates={templates}
+            initialData={lab}
+            role={role}
+            defaultDosenFee={defaultDosenFee}
+            defaultLppmFee={defaultLppmFee}
+        />
+    );
 }

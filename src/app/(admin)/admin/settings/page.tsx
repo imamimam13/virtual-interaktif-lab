@@ -4,8 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { getSystemConfig } from "@/lib/admin-actions";
+import RevenueConfigForm from "@/components/admin/revenue-config-form";
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+    const defaultDosenFee = await getSystemConfig("DEFAULT_DOSEN_FEE") || "50";
+    const defaultLppmFee = await getSystemConfig("DEFAULT_LPPM_FEE") || "10";
+
     return (
         <div className="space-y-6">
             <div>
@@ -14,6 +19,11 @@ export default function AdminSettingsPage() {
             </div>
 
             <div className="grid gap-6">
+                <RevenueConfigForm
+                    defaultDosenFee={defaultDosenFee}
+                    defaultLppmFee={defaultLppmFee}
+                />
+
                 <Card>
                     <CardHeader>
                         <CardTitle>Profil Universitas</CardTitle>
