@@ -8,85 +8,88 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 // SQLite compatibility: Enums removed
-
 
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
-  password  String   // Will be hashed
+  password  String // Will be hashed
   role      String   @default("STUDENT") // Role: STUDENT, ADMIN, LECTURER
   avatar    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-  enrollments Enrollment[]
+
+  departmentId   String?
+  department     Department?      @relation(fields: [departmentId], references: [id])
+  enrollments    Enrollment[]
   moduleProgress ModuleProgress[]
-  certificates Certificate[]
+  certificates   Certificate[]
 }
 
 model Department {
-  id          String   @id @default(cuid())
-  name        String   // e.g. "Manajemen Pemasaran"
+  id          String  @id @default(cuid())
+  name        String // e.g. "Manajemen Pemasaran"
   description String?
-  
-  users       User[]
-  labs        Lab[]
-  createdAt   DateTime @default(now())
+
+  users     User[]
+  labs      Lab[]
+  createdAt DateTime @default(now())
 }
 
 model Lab {
-  id           String      @id @default(cuid())
-  title        String
-  description  String
-  thumbnail    String?
-  instructor   String?     // Nama Dosen Pembuat
-  grading      String?     // JSON: { "VIDEO": 10, "QUIZ": 40, ... }
-  
+  id          String  @id @default(cuid())
+  title       String
+  description String
+  thumbnail   String?
+  instructor  String? // Nama Dosen Pembuat
+  grading     String? // JSON: { "VIDEO": 10, "QUIZ": 40, ... }
+
+  price             Int     @default(0)
+  feePercentage     Int     @default(50) // Dosen Share (50%)
+  lppmFeePercentage Int     @default(10) // LPPM Share (10%)
+  bankDetails       String? // Virtual Account / Bank Transfer Info
+
   departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
+  department   Department?   @relation(fields: [departmentId], references: [id])
   modules      Module[]
   certificates Certificate[]
-  
+
   certificateTemplateId String?
   certificateTemplate   CertificateTemplate? @relation(fields: [certificateTemplateId], references: [id])
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   enrollments Enrollment[]
 }
 
 model CertificateTemplate {
-  id        String   @id @default(cuid())
-  name      String
-  html      String   // @db.Text in postgres, default String in sqlite
-  css       String   // @db.Text
+  id            String  @id @default(cuid())
+  name          String
+  html          String // @db.Text in postgres, default String in sqlite
+  css           String // @db.Text
   backgroundUrl String?
-  elements  String?  // JSON String: [{id, type, x, y, style, ...}]
-  isDefault Boolean  @default(false)
-  
-  labs      Lab[]
-  
+  elements      String? // JSON String: [{id, type, x, y, style, ...}]
+  isDefault     Boolean @default(false)
+
+  labs Lab[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Module {
-  id        String   @id @default(cuid())
-  title     String
-  type      String   // ModuleType: QUIZ, VIDEO, PDF
-  content   String   // JSON Stringified
-  order     Int        @default(0)
-  labId     String
-  lab       Lab        @relation(fields: [labId], references: [id], onDelete: Cascade)
-  progress  ModuleProgress[]
-  
-  createdAt DateTime   @default(now())
+  id       String           @id @default(cuid())
+  title    String
+  type     String // ModuleType: QUIZ, VIDEO, PDF
+  content  String // JSON Stringified
+  order    Int              @default(0)
+  labId    String
+  lab      Lab              @relation(fields: [labId], references: [id], onDelete: Cascade)
+  progress ModuleProgress[]
+
+  createdAt DateTime @default(now())
 }
 
 model ModuleProgress {
@@ -94,25 +97,33 @@ model ModuleProgress {
   userId    String
   moduleId  String
   completed Boolean  @default(false)
-  score     Int?     // For Quizzes
+  score     Int? // For Quizzes
   updatedAt DateTime @updatedAt
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([userId, moduleId])
 }
 
 model Enrollment {
-  id        String   @id @default(cuid())
-  userId    String
-  labId     String
-  status    String   @default("ACTIVE") // ACTIVE, COMPLETED
-  joinedAt  DateTime @default(now())
+  id          String    @id @default(cuid())
+  userId      String
+  labId       String
+  status      String    @default("ACTIVE") // ACTIVE, COMPLETED, PENDING (if waiting for payment)
+  
+  paymentStatus String   @default("PAID") // PAID, PENDING, REJECTED
+  paymentProof  String?  // URL to uploaded proof
+  
+  instructorShare Int?   // Snapshot of Dosen Fee
+  lppmShare       Int?   // Snapshot of LPPM Fee
+  platformShare   Int?   // Snapshot of Admin Fee
+
+  joinedAt    DateTime  @default(now())
   completedAt DateTime?
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lab       Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lab  Lab  @relation(fields: [labId], references: [id], onDelete: Cascade)
 
   @@unique([userId, labId])
 }
@@ -121,21 +132,21 @@ model LevelTitle {
   id        String   @id @default(cuid())
   level     Int      @unique
   title     String
-  minXp     Int      // Optional helpers
+  minXp     Int // Optional helpers
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Certificate {
-  id        String   @id @default(cuid())
-  userId    String
-  labId     String
-  labTitle  String 
-  issuedAt  DateTime @default(now())
-  code      String   @unique // C-USERID-LABID-RANDOM
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lab       Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+  id       String   @id @default(cuid())
+  userId   String
+  labId    String
+  labTitle String
+  issuedAt DateTime @default(now())
+  code     String   @unique // C-USERID-LABID-RANDOM
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lab  Lab  @relation(fields: [labId], references: [id], onDelete: Cascade)
 
   @@unique([userId, labId])
 }

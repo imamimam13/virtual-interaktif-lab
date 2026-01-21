@@ -13,6 +13,10 @@ const CreateLabSchema = z.object({
     isIndependent: z.coerce.boolean(),
     instructor: z.string().optional(),
     grading: z.string().optional(), // JSON
+    price: z.coerce.number().min(0, "Price must be non-negative"),
+    feePercentage: z.coerce.number().min(0).max(100, "Percentage must be 0-100"),
+    lppmFeePercentage: z.coerce.number().min(0).max(100, "Percentage must be 0-100"),
+    bankDetails: z.string().optional(),
 });
 
 export type LabFormState = {
@@ -24,6 +28,10 @@ export type LabFormState = {
         isIndependent?: string[];
         instructor?: string[];
         grading?: string[];
+        price?: string[];
+        feePercentage?: string[];
+        lppmFeePercentage?: string[];
+        bankDetails?: string[];
     };
     message?: string | null;
     payload?: {
@@ -34,6 +42,10 @@ export type LabFormState = {
         isIndependent: File | string | null;
         instructor?: string;
         grading?: string;
+        price?: string;
+        feePercentage?: string;
+        lppmFeePercentage?: string;
+        bankDetails?: string;
     } | null;
 };
 
@@ -46,6 +58,10 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         isIndependent: formData.get("isIndependent"),
         instructor: formData.get("instructor") as string,
         grading: formData.get("grading") as string,
+        price: formData.get("price") as string,
+        feePercentage: formData.get("feePercentage") as string,
+        lppmFeePercentage: formData.get("lppmFeePercentage") as string,
+        bankDetails: formData.get("bankDetails") as string,
     };
 
     console.log("createLab Action Received:", rawData);
@@ -58,6 +74,10 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         isIndependent: rawData.isIndependent,
         instructor: rawData.instructor,
         grading: rawData.grading,
+        price: rawData.price,
+        feePercentage: rawData.feePercentage,
+        lppmFeePercentage: rawData.lppmFeePercentage,
+        bankDetails: rawData.bankDetails,
     });
 
     if (!validatedFields.success) {
@@ -69,7 +89,10 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         };
     }
 
-    const { title, description, departmentId, certificateTemplateId, isIndependent, instructor, grading } = validatedFields.data;
+    const {
+        title, description, departmentId, certificateTemplateId, isIndependent, instructor, grading,
+        price, feePercentage, lppmFeePercentage, bankDetails
+    } = validatedFields.data;
 
     try {
         await prisma.lab.create({
@@ -80,7 +103,11 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
                 certificateTemplateId: certificateTemplateId || null,
                 thumbnail: "/images/placeholders/lab-default.jpg",
                 instructor,
-                grading
+                grading,
+                price,
+                feePercentage,
+                lppmFeePercentage,
+                bankDetails
             },
         });
     } catch (error) {
@@ -106,6 +133,10 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         isIndependent: formData.get("isIndependent"),
         instructor: formData.get("instructor") as string,
         grading: formData.get("grading") as string,
+        price: formData.get("price") as string,
+        feePercentage: formData.get("feePercentage") as string,
+        lppmFeePercentage: formData.get("lppmFeePercentage") as string,
+        bankDetails: formData.get("bankDetails") as string,
     };
 
     console.log("updateLab Action Received:", rawData);
@@ -118,6 +149,10 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         isIndependent: rawData.isIndependent,
         instructor: rawData.instructor,
         grading: rawData.grading,
+        price: rawData.price,
+        feePercentage: rawData.feePercentage,
+        lppmFeePercentage: rawData.lppmFeePercentage,
+        bankDetails: rawData.bankDetails,
     });
 
     if (!validatedFields.success) {
@@ -128,7 +163,10 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         };
     }
 
-    const { title, description, departmentId, certificateTemplateId, isIndependent, instructor, grading } = validatedFields.data;
+    const {
+        title, description, departmentId, certificateTemplateId, isIndependent, instructor, grading,
+        price, feePercentage, lppmFeePercentage, bankDetails
+    } = validatedFields.data;
 
     try {
         await prisma.lab.update({
@@ -139,7 +177,11 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
                 departmentId: isIndependent ? null : departmentId,
                 certificateTemplateId: certificateTemplateId || null,
                 instructor,
-                grading
+                grading,
+                price,
+                feePercentage,
+                lppmFeePercentage,
+                bankDetails
             },
         });
     } catch (error) {
@@ -262,4 +304,27 @@ export async function createUser(prevState: any, formData: FormData) {
 
     revalidatePath("/admin/users");
     redirect("/admin/users");
+}
+
+export async function updateEnrollmentStatus(id: string, paymentStatus: "PAID" | "REJECTED") {
+    try {
+        const updateData: any = { paymentStatus };
+
+        // If Approved, Activate Access
+        if (paymentStatus === "PAID") {
+            updateData.status = "ACTIVE";
+        } else if (paymentStatus === "REJECTED") {
+            updateData.status = "REJECTED"; // Or keep PENDING/BLOCKED
+        }
+
+        await prisma.enrollment.update({
+            where: { id },
+            data: updateData
+        });
+
+        revalidatePath("/admin/enrollments");
+        return { message: "Status updated" };
+    } catch (error) {
+        return { message: "Failed to update status" };
+    }
 }

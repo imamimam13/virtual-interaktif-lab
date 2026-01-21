@@ -90,7 +90,12 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
 
                         {!isEnrolled && (
                             <div className="pt-2">
-                                <EnrollButton labId={lab.id} />
+                                <EnrollButton
+                                    labId={lab.id}
+                                    labTitle={lab.title}
+                                    price={lab.price}
+                                    bankDetails={lab.bankDetails || ""}
+                                />
                             </div>
                         )}
                     </div>

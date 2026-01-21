@@ -34,6 +34,10 @@ type LabData = {
     thumbnail: string | null;
     instructor: string | null;
     grading: string | null;
+    price: number;
+    feePercentage: number;
+    lppmFeePercentage: number;
+    bankDetails: string | null;
 };
 
 function SubmitButton({ isEdit }: { isEdit: boolean }) {
@@ -145,7 +149,76 @@ export default function LabForm({ departments, templates, initialData }: { depar
                             </div>
                         )}
 
-                        <div className="grid gap-2">
+                        <div className="space-y-4 border-t pt-4">
+                            <h3 className="text-lg font-semibold">Konfigurasi Harga & Revenue</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="price">Harga Lab (Rp)</Label>
+                                    <Input
+                                        id="price"
+                                        name="price"
+                                        type="number"
+                                        min="0"
+                                        defaultValue={state?.payload?.price || initialData?.price || 0}
+                                        required
+                                    />
+                                    <p className="text-xs text-muted-foreground">Set 0 untuk Gratis.</p>
+                                    {state?.errors?.price && <p className="text-sm text-red-500">{state.errors.price}</p>}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="bankDetails">Bank / Info Pembayaran</Label>
+                                    <Input
+                                        id="bankDetails"
+                                        name="bankDetails"
+                                        placeholder="BCA 123456789 a.n Universitas"
+                                        defaultValue={state?.payload?.bankDetails || initialData?.bankDetails || ""}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Ditampilkan ke siswa saat pembayaran.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="feePercentage">Fee Dosen (%)</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            id="feePercentage"
+                                            name="feePercentage"
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            className="w-24"
+                                            defaultValue={state?.payload?.feePercentage !== undefined ? state.payload.feePercentage : initialData?.feePercentage ?? 50}
+                                        />
+                                        <span className="text-sm font-medium">%</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Share untuk Instruktur/Dosen.</p>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="lppmFeePercentage">Fee LPPM (%)</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            id="lppmFeePercentage"
+                                            name="lppmFeePercentage"
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            className="w-24"
+                                            defaultValue={state?.payload?.lppmFeePercentage !== undefined ? state.payload.lppmFeePercentage : initialData?.lppmFeePercentage ?? 10}
+                                        />
+                                        <span className="text-sm font-medium">%</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Share untuk Validasi Sertifikat.</p>
+                                </div>
+                                <div className="col-span-full">
+                                    <p className="text-xs text-muted-foreground italic">
+                                        * Sisa persentase otomatis menjadi Revenue Platform (Admin).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-2 pt-2 border-t">
                             <Label>Template Sertifikat</Label>
                             <Select name="certificateTemplateId" defaultValue={state?.payload?.certificateTemplateId || initialData?.certificateTemplateId || "default"}>
                                 <SelectTrigger>
