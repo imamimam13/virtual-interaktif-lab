@@ -21,10 +21,13 @@ export default function EnrollButton({ labId, labTitle, price = 0, bankDetails =
     const router = useRouter();
 
     const handleEnroll = async () => {
+        console.log("Enroll Clicked. Price:", price);
         if (price > 0) {
+            console.log("Opening Payment Modal...");
             setIsPaymentOpen(true);
             return;
         }
+        console.log("Enrolling in Free Lab...");
 
         setIsLoading(true);
         try {
