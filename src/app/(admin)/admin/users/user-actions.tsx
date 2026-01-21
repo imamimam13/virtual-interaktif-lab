@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Copy, MoreVertical, Trash2, KeyRound, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
