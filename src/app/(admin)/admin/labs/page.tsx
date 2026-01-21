@@ -9,8 +9,23 @@ import { deleteLab } from "@/lib/admin-actions";
 import DeleteLabButton from "@/components/admin/delete-lab-button";
 import ReviewLabButton from "@/components/admin/review-lab-button";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+
 export default async function AdminLabsPage() {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) redirect("/auth/login");
+
+    const isLecturer = session.user.role === "LECTURER";
+
+    // Explicitly define User where clause or empty object
+    const whereClause = isLecturer
+        ? { instructor: session.user.name ?? "UNKNOWN_INSTRUCTOR" }
+        : {};
+
     const labs = await prisma.lab.findMany({
+        where: whereClause,
         include: {
             department: true,
             _count: {

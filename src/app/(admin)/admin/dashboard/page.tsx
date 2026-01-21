@@ -19,14 +19,16 @@ export default async function AdminDashboardPage() {
     // --- LECTURER VIEW ---
     if (isLecturer) {
         // Stats for Lecturer
+        const instructorName = user.name ?? "UNKNOWN_INSTRUCTOR";
+
         const myLabsVal = await prisma.lab.count({
-            where: { instructor: user.name }
+            where: { instructor: instructorName }
         });
 
         // Count enrollments in my labs
         const myEnrollments = await prisma.enrollment.count({
             where: {
-                lab: { instructor: user.name } // Filtering by name as per current schema architecture
+                lab: { instructor: instructorName } // Filtering by name as per current schema architecture
             }
         });
 
@@ -36,7 +38,7 @@ export default async function AdminDashboardPage() {
         const paidEnrollments: any[] = await prisma.enrollment.findMany({
             where: {
                 paymentStatus: "PAID",
-                lab: { instructor: user.name }
+                lab: { instructor: instructorName }
             } as any,
             select: { instructorShare: true }
         });
@@ -44,7 +46,7 @@ export default async function AdminDashboardPage() {
 
         // Fetch My Recent Labs
         const myRecentLabs = await prisma.lab.findMany({
-            where: { instructor: user.name },
+            where: { instructor: instructorName },
             take: 5,
             orderBy: { createdAt: "desc" },
             include: {

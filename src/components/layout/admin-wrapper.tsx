@@ -30,7 +30,7 @@ const adminSidebarItems = [
     { icon: FlaskConical, label: "Kelola Lab", href: "/admin/labs", roles: ["ADMIN", "LECTURER"] },
     { icon: Users, label: "Pengguna", href: "/admin/users", roles: ["ADMIN"] },
     { icon: FlaskConical, label: "Prodi / Jurusan", href: "/admin/departments", roles: ["ADMIN"] },
-    { icon: Trophy, label: "Gamification", href: "/admin/gamification", roles: ["ADMIN", "LECTURER"] },
+    { icon: Trophy, label: "Gamification", href: "/admin/gamification", roles: ["ADMIN"] },
     { icon: FileCode, label: "Certificate Templates", href: "/admin/certificate-templates", roles: ["ADMIN", "LECTURER"] },
     { icon: CheckCircle, label: "Verifikasi Bayar", href: "/admin/enrollments", roles: ["ADMIN", "LECTURER"] },
     { icon: Wallet, label: "Finance & Revenue", href: "/admin/revenue", roles: ["ADMIN", "LECTURER"] },
