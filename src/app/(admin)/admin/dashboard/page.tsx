@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 
 export default async function AdminDashboardPage() {
     const session = await getServerSession(authOptions);
-    if (!session?.user) redirect("/auth/login");
+    if (!session?.user?.email) redirect("/auth/login");
 
     const user = await prisma.user.findUnique({ where: { email: session.user.email } });
     if (!user) redirect("/auth/login");

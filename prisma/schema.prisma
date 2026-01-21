@@ -25,6 +25,21 @@ model User {
   enrollments    Enrollment[]
   moduleProgress ModuleProgress[]
   certificates   Certificate[]
+  payouts        Payout[]
+}
+
+model Payout {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Int
+  status      String   @default("PENDING") // PENDING, PAID, REJECTED
+  bankDetails String?
+  proof       String?  // URL to payment proof
+  notes       String?  // Admin notes/reject reason
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Department {
