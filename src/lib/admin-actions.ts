@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import bcrypt from "bcryptjs";
 
 const CreateLabSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters"),
@@ -108,7 +109,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
                 feePercentage,
                 lppmFeePercentage,
                 bankDetails
-            },
+            } as any,
         });
     } catch (error) {
         console.error("Database Error:", error);
@@ -182,7 +183,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
                 feePercentage,
                 lppmFeePercentage,
                 bankDetails
-            },
+            } as any,
         });
     } catch (error) {
         console.error("Database Error:", error);
@@ -284,8 +285,9 @@ export async function createUser(prevState: any, formData: FormData) {
         };
     }
 
-    // Basic password hashing simulation
-    const hashedPassword = validated.data.password || "defaultPassword123";
+    // Hash password
+    const plainPassword = validated.data.password || "defaultPassword123";
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
     try {
         await prisma.user.create({
@@ -297,13 +299,12 @@ export async function createUser(prevState: any, formData: FormData) {
                 departmentId: validated.data.departmentId,
             }
         });
+        revalidatePath("/admin/users");
+        return { message: "User created successfully" };
     } catch (e) {
         console.error(e);
         return { message: "Failed to create user. Email might be in use." };
     }
-
-    revalidatePath("/admin/users");
-    redirect("/admin/users");
 }
 
 export async function updateEnrollmentStatus(id: string, paymentStatus: "PAID" | "REJECTED") {
