@@ -61,6 +61,7 @@ model Lab {
   grading     String? // JSON: { "VIDEO": 10, "QUIZ": 40, ... }
 
   price             Int     @default(0)
+  requestedPrice    Int     @default(0) // Price requested by Dosen, waiting for Admin approval
   feePercentage     Int     @default(50) // Dosen Share (50%)
   lppmFeePercentage Int     @default(10) // LPPM Share (10%)
   bankDetails       String? // Virtual Account / Bank Transfer Info

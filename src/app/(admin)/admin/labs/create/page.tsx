@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import CreateLabForm from "./form";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export default async function CreateLabPage() {
     // Fetch departments from DB for the dropdown
@@ -12,5 +14,8 @@ export default async function CreateLabPage() {
         select: { id: true, name: true, isDefault: true }
     });
 
-    return <CreateLabForm departments={departments} templates={templates} />;
+    const session = await getServerSession(authOptions);
+    const role = session?.user?.role || "LECTURER";
+
+    return <CreateLabForm departments={departments} templates={templates} role={role} />;
 }

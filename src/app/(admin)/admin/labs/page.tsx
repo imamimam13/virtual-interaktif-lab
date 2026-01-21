@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { deleteLab } from "@/lib/admin-actions";
 import DeleteLabButton from "@/components/admin/delete-lab-button";
+import ReviewLabButton from "@/components/admin/review-lab-button";
 
 export default async function AdminLabsPage() {
     const labs = await prisma.lab.findMany({
@@ -56,8 +57,8 @@ export default async function AdminLabsPage() {
                         <p>Silakan buat laboratorium pertama anda.</p>
                     </div>
                 ) : (
-                    labs.map((lab: { id: string; title: string; description: string; createdAt: Date; department: { name: string; } | null; _count: { modules: number; }; }) => (
-                        <Card key={lab.id} className="group hover:shadow-md transition-all relative">
+                    labs.map((lab) => (
+                        <Card key={lab.id} className={`group hover:shadow-md transition-all relative ${lab.requestedPrice > 0 ? "border-orange-300 bg-orange-50/10" : ""}`}>
                             <Link href={`/admin/labs/${lab.id}`} className="absolute inset-0 z-0" />
                             <CardHeader className="pb-4 relative z-10">
                                 <div className="flex justify-between items-start gap-4">
@@ -65,6 +66,9 @@ export default async function AdminLabsPage() {
                                         🧪
                                     </div>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity relative z-20">
+                                        {lab.requestedPrice > 0 && (
+                                            <ReviewLabButton lab={lab} />
+                                        )}
                                         <Link href={`/admin/labs/${lab.id}/edit`}>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
                                                 <Pencil className="h-4 w-4" />
@@ -84,6 +88,11 @@ export default async function AdminLabsPage() {
                                         <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200">Independen</Badge>
                                     )}
                                     <Badge variant="secondary">{lab._count.modules} Modul</Badge>
+                                    {lab.requestedPrice > 0 && (
+                                        <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200 animate-pulse">
+                                            Waiting Approval
+                                        </Badge>
+                                    )}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                     Dibuat: {new Date(lab.createdAt).toLocaleDateString("id-ID")}

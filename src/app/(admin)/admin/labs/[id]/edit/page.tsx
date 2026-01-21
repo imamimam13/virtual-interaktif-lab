@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import LabForm from "@/app/(admin)/admin/labs/create/form";
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export default async function EditLabPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -22,5 +24,8 @@ export default async function EditLabPage({ params }: { params: Promise<{ id: st
         select: { id: true, name: true, isDefault: true }
     });
 
-    return <LabForm departments={departments} templates={templates} initialData={lab} />;
+    const session = await getServerSession(authOptions);
+    const role = session?.user?.role || "LECTURER";
+
+    return <LabForm departments={departments} templates={templates} initialData={lab} role={role} />;
 }

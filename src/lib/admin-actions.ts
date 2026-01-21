@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
@@ -95,6 +97,22 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         price, feePercentage, lppmFeePercentage, bankDetails
     } = validatedFields.data;
 
+    const session = await getServerSession(authOptions);
+    const role = session?.user?.role || "LECTURER"; // Default to safest role
+
+    let finalPrice = price;
+    let finalRequestedPrice = 0;
+    let finalFee = feePercentage;
+    let finalLppmFee = lppmFeePercentage;
+
+    if (role === "LECTURER") {
+        // Enforce rules for Lecturers
+        finalRequestedPrice = price; // Store requested price
+        finalPrice = 0; // Force Free until approved
+        finalFee = 50;  // Force Default
+        finalLppmFee = 10; // Force Default
+    }
+
     try {
         await prisma.lab.create({
             data: {
@@ -105,9 +123,10 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
                 thumbnail: "/images/placeholders/lab-default.jpg",
                 instructor,
                 grading,
-                price,
-                feePercentage,
-                lppmFeePercentage,
+                price: finalPrice,
+                requestedPrice: finalRequestedPrice,
+                feePercentage: finalFee,
+                lppmFeePercentage: finalLppmFee,
                 bankDetails
             } as any,
         });
@@ -169,21 +188,59 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         price, feePercentage, lppmFeePercentage, bankDetails
     } = validatedFields.data;
 
+    const session = await getServerSession(authOptions);
+    const role = session?.user?.role || "LECTURER";
+
+    let finalPrice = price;
+    let finalRequestedPrice = undefined; // Undefined means don't touch unless needed
+    let finalFee = feePercentage;
+    let finalLppmFee = lppmFeePercentage;
+
+    if (role === "LECTURER") {
+        // If Lecturer edits, we must re-evaluate Price
+        if (price > 0) {
+            finalRequestedPrice = price;
+            finalPrice = 0; // Reset to Free -> Waiting Approval
+        } else {
+            // If they set 0, they mean Free.
+            finalRequestedPrice = 0;
+            finalPrice = 0;
+        }
+
+        // Lecturers cannot change fees
+        finalFee = 50;
+        finalLppmFee = 10;
+    } else {
+        // Admin edits:
+        // If Admin sets a price, we assume it's approved.
+        // We can clear requestedPrice if they set a real Price.
+        if (price > 0) {
+            finalRequestedPrice = 0;
+        }
+    }
+
+    // Determine data object to update (handle undefined requestedPrice)
+    const updateData: any = {
+        title,
+        description,
+        departmentId: isIndependent ? null : departmentId,
+        certificateTemplateId: certificateTemplateId || null,
+        instructor,
+        grading,
+        price: finalPrice,
+        feePercentage: finalFee,
+        lppmFeePercentage: finalLppmFee,
+        bankDetails
+    };
+
+    if (finalRequestedPrice !== undefined) {
+        updateData.requestedPrice = finalRequestedPrice;
+    }
+
     try {
         await prisma.lab.update({
             where: { id: rawData.id },
-            data: {
-                title,
-                description,
-                departmentId: isIndependent ? null : departmentId,
-                certificateTemplateId: certificateTemplateId || null,
-                instructor,
-                grading,
-                price,
-                feePercentage,
-                lppmFeePercentage,
-                bankDetails
-            } as any,
+            data: updateData,
         });
     } catch (error) {
         console.error("Database Error:", error);
@@ -359,5 +416,38 @@ export async function updateEnrollmentStatus(id: string, paymentStatus: "PAID" |
         return { message: "Status updated" };
     } catch (error) {
         return { message: "Failed to update status" };
+    }
+}
+
+export async function approveLab(labId: string, price: number, feePercentage: number, lppmFeePercentage: number) {
+    try {
+        await prisma.lab.update({
+            where: { id: labId },
+            data: {
+                price,
+                feePercentage,
+                lppmFeePercentage,
+                requestedPrice: 0 // Clear the request
+            }
+        });
+        revalidatePath("/admin/labs");
+        return { message: "Lab approved successfully" };
+    } catch (error) {
+        return { message: "Failed to approve lab" };
+    }
+}
+
+export async function rejectLab(labId: string) {
+    try {
+        await prisma.lab.update({
+            where: { id: labId },
+            data: {
+                requestedPrice: 0 // Clear the request, keeping price 0 (Free)
+            }
+        });
+        revalidatePath("/admin/labs");
+        return { message: "Lab price request rejected" };
+    } catch (error) {
+        return { message: "Failed to reject lab" };
     }
 }

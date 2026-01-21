@@ -35,6 +35,7 @@ type LabData = {
     instructor: string | null;
     grading: string | null;
     price: number;
+    requestedPrice?: number;
     feePercentage: number;
     lppmFeePercentage: number;
     bankDetails: string | null;
@@ -51,8 +52,9 @@ function SubmitButton({ isEdit }: { isEdit: boolean }) {
     );
 }
 
-export default function LabForm({ departments, templates, initialData }: { departments: Department[], templates?: Template[], initialData?: LabData }) {
+export default function LabForm({ departments, templates, initialData, role = "LECTURER" }: { departments: Department[], templates?: Template[], initialData?: LabData, role?: string }) {
     const isEdit = !!initialData;
+    const isLecturer = role === "LECTURER";
     const [isIndependent, setIsIndependent] = useState(initialData ? !initialData.departmentId : false);
 
     // State for form validation
@@ -63,11 +65,17 @@ export default function LabForm({ departments, templates, initialData }: { depar
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
+            {/* ... Header codes ... */}
             <div>
                 <h1 className="text-3xl font-bold">{isEdit ? "Edit Laboratorium" : "Buat Laboratorium Baru"}</h1>
                 <p className="text-muted-foreground">
                     {isEdit ? "Perbarui informasi laboratorium." : "Tambahkan modul praktikum virtual baru ke sistem."}
                 </p>
+                {initialData?.requestedPrice && initialData.requestedPrice > 0 && initialData.price === 0 && (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+                        <strong>Menunggu Review:</strong> Anda mengajukan harga <strong>Rp {initialData.requestedPrice.toLocaleString()}</strong>. Saat ini Lab masih <strong>Gratis</strong> sampai disetujui Admin.
+                    </div>
+                )}
             </div>
 
             <Card>
@@ -79,6 +87,7 @@ export default function LabForm({ departments, templates, initialData }: { depar
                     <form action={dispatch} className="space-y-6">
                         {isEdit && <input type="hidden" name="id" value={initialData.id} />}
 
+                        {/* ... Title, Desc, Independent ... (Keep existing code above line 152) */}
                         <div className="grid gap-2">
                             <Label htmlFor="title">Nama Laboratorium</Label>
                             <Input
@@ -153,16 +162,16 @@ export default function LabForm({ departments, templates, initialData }: { depar
                             <h3 className="text-lg font-semibold">Konfigurasi Harga & Revenue</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="price">Harga Lab (Rp)</Label>
+                                    <Label htmlFor="price">{isLecturer ? "Ajukan Harga (Rp) - Menunggu Approval" : "Harga Lab (Rp)"}</Label>
                                     <Input
                                         id="price"
                                         name="price"
                                         type="number"
                                         min="0"
-                                        defaultValue={state?.payload?.price || initialData?.price || 0}
+                                        defaultValue={state?.payload?.price || (isLecturer && initialData?.requestedPrice ? initialData.requestedPrice : initialData?.price) || 0}
                                         required
                                     />
-                                    <p className="text-xs text-muted-foreground">Set 0 untuk Gratis.</p>
+                                    <p className="text-xs text-muted-foreground">{isLecturer ? "Harga akan aktif setelah disetujui Admin." : "Set 0 untuk Gratis."}</p>
                                     {state?.errors?.price && <p className="text-sm text-red-500">{state.errors.price}</p>}
                                 </div>
                                 <div className="grid gap-2">
@@ -177,45 +186,54 @@ export default function LabForm({ departments, templates, initialData }: { depar
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="feePercentage">Fee Dosen (%)</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            id="feePercentage"
-                                            name="feePercentage"
-                                            type="number"
-                                            min="0"
-                                            max="100"
-                                            className="w-24"
-                                            defaultValue={state?.payload?.feePercentage !== undefined ? state.payload.feePercentage : initialData?.feePercentage ?? 50}
-                                        />
-                                        <span className="text-sm font-medium">%</span>
+                            {isLecturer ? (
+                                <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-sm text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                    <strong>Ketentuan Revenue Sharing:</strong>
+                                    <ul className="list-disc list-inside mt-1">
+                                        <li>Fee Instruktur: 50%</li>
+                                        <li>Fee LPPM: 10%</li>
+                                        <li>Fee Platform (Admin): 40%</li>
+                                    </ul>
+                                    <p className="mt-2 text-xs">Hubungi Admin jika Anda memiliki kesepakatan khusus.</p>
+                                    <input type="hidden" name="feePercentage" value="50" />
+                                    <input type="hidden" name="lppmFeePercentage" value="10" />
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="feePercentage">Fee Dosen (%)</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                id="feePercentage"
+                                                name="feePercentage"
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                className="w-24"
+                                                defaultValue={state?.payload?.feePercentage !== undefined ? state.payload.feePercentage : initialData?.feePercentage ?? 50}
+                                            />
+                                            <span className="text-sm font-medium">%</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">Share untuk Instruktur/Dosen.</p>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">Share untuk Instruktur/Dosen.</p>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="lppmFeePercentage">Fee LPPM (%)</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            id="lppmFeePercentage"
-                                            name="lppmFeePercentage"
-                                            type="number"
-                                            min="0"
-                                            max="100"
-                                            className="w-24"
-                                            defaultValue={state?.payload?.lppmFeePercentage !== undefined ? state.payload.lppmFeePercentage : initialData?.lppmFeePercentage ?? 10}
-                                        />
-                                        <span className="text-sm font-medium">%</span>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="lppmFeePercentage">Fee LPPM (%)</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                id="lppmFeePercentage"
+                                                name="lppmFeePercentage"
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                className="w-24"
+                                                defaultValue={state?.payload?.lppmFeePercentage !== undefined ? state.payload.lppmFeePercentage : initialData?.lppmFeePercentage ?? 10}
+                                            />
+                                            <span className="text-sm font-medium">%</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">Share untuk Validasi Sertifikat.</p>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">Share untuk Validasi Sertifikat.</p>
                                 </div>
-                                <div className="col-span-full">
-                                    <p className="text-xs text-muted-foreground italic">
-                                        * Sisa persentase otomatis menjadi Revenue Platform (Admin).
-                                    </p>
-                                </div>
-                            </div>
+                            )}
                         </div>
 
                         <div className="grid gap-2 pt-2 border-t">
@@ -265,9 +283,9 @@ export default function LabForm({ departments, templates, initialData }: { depar
                         <div className="flex justify-end pt-4">
                             <SubmitButton isEdit={isEdit} />
                         </div>
-                    </form>
-                </CardContent>
-            </Card>
-        </div>
+                    </form >
+                </CardContent >
+            </Card >
+        </div >
     );
 }
