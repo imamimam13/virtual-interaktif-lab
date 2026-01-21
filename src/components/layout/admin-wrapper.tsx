@@ -14,7 +14,9 @@ import {
     LogOut,
     ShieldAlert,
     Trophy,
-    FileCode
+    FileCode,
+    CheckCircle,
+    Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -30,6 +32,8 @@ const adminSidebarItems = [
     { icon: FlaskConical, label: "Prodi / Jurusan", href: "/admin/departments", roles: ["ADMIN"] },
     { icon: Trophy, label: "Gamification", href: "/admin/gamification", roles: ["ADMIN", "LECTURER"] },
     { icon: FileCode, label: "Certificate Templates", href: "/admin/certificate-templates", roles: ["ADMIN", "LECTURER"] },
+    { icon: CheckCircle, label: "Verifikasi Bayar", href: "/admin/enrollments", roles: ["ADMIN", "LECTURER"] },
+    { icon: Wallet, label: "Finance & Revenue", href: "/admin/revenue", roles: ["ADMIN", "LECTURER"] },
     { icon: Settings, label: "Pengaturan Platform", href: "/admin/settings", roles: ["ADMIN"] },
 ];
 
