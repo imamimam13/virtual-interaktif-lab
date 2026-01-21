@@ -6,7 +6,8 @@ export default withAuth(
         // strict role check for admin routes
         if (
             req.nextUrl.pathname.startsWith("/admin") &&
-            req.nextauth.token?.role !== "ADMIN"
+            req.nextauth.token?.role !== "ADMIN" &&
+            req.nextauth.token?.role !== "LECTURER"
         ) {
             return NextResponse.redirect(new URL("/dashboard", req.url));
         }

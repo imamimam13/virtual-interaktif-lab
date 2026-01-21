@@ -23,17 +23,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 const adminSidebarItems = [
-    { icon: LayoutDashboard, label: "Overview", href: "/admin/dashboard" },
-    { icon: PlusCircle, label: "Buat Lab Baru", href: "/admin/labs/create" },
-    { icon: FlaskConical, label: "Kelola Lab", href: "/admin/labs" },
-    { icon: Users, label: "Pengguna", href: "/admin/users" },
-    { icon: FlaskConical, label: "Prodi / Jurusan", href: "/admin/departments" },
-    { icon: Trophy, label: "Gamification", href: "/admin/gamification" },
-    { icon: FileCode, label: "Certificate Templates", href: "/admin/certificate-templates" },
-    { icon: Settings, label: "Pengaturan Platform", href: "/admin/settings" },
+    { icon: LayoutDashboard, label: "Overview", href: "/admin/dashboard", roles: ["ADMIN", "LECTURER"] },
+    { icon: PlusCircle, label: "Buat Lab Baru", href: "/admin/labs/create", roles: ["ADMIN", "LECTURER"] },
+    { icon: FlaskConical, label: "Kelola Lab", href: "/admin/labs", roles: ["ADMIN", "LECTURER"] },
+    { icon: Users, label: "Pengguna", href: "/admin/users", roles: ["ADMIN"] },
+    { icon: FlaskConical, label: "Prodi / Jurusan", href: "/admin/departments", roles: ["ADMIN"] },
+    { icon: Trophy, label: "Gamification", href: "/admin/gamification", roles: ["ADMIN", "LECTURER"] },
+    { icon: FileCode, label: "Certificate Templates", href: "/admin/certificate-templates", roles: ["ADMIN", "LECTURER"] },
+    { icon: Settings, label: "Pengaturan Platform", href: "/admin/settings", roles: ["ADMIN"] },
 ];
 
-export default function AdminLayoutWrapper({ children }: { children: React.ReactNode }) {
+export default function AdminLayoutWrapper({ children, role }: { children: React.ReactNode; role?: string }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const pathname = usePathname();
 
@@ -72,21 +72,23 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                     <div className="space-y-4 py-4">
                         <div className="px-3 py-2">
                             <div className="space-y-1">
-                                {adminSidebarItems.map((item) => (
-                                    <Link key={item.href} href={item.href}>
-                                        <Button
-                                            variant="ghost"
-                                            className={cn(
-                                                "w-full justify-start hover:bg-zinc-800 hover:text-white",
-                                                pathname === item.href ? "bg-red-600/10 text-red-400 hover:bg-red-600/20" : "text-zinc-400",
-                                                !isSidebarOpen && "justify-center px-2"
-                                            )}
-                                        >
-                                            <item.icon className={cn("h-5 w-5", isSidebarOpen && "mr-2")} />
-                                            {isSidebarOpen && <span>{item.label}</span>}
-                                        </Button>
-                                    </Link>
-                                ))}
+                                {adminSidebarItems
+                                    .filter(item => !item.roles || (role && item.roles.includes(role)))
+                                    .map((item) => (
+                                        <Link key={item.href} href={item.href}>
+                                            <Button
+                                                variant="ghost"
+                                                className={cn(
+                                                    "w-full justify-start hover:bg-zinc-800 hover:text-white",
+                                                    pathname === item.href ? "bg-red-600/10 text-red-400 hover:bg-red-600/20" : "text-zinc-400",
+                                                    !isSidebarOpen && "justify-center px-2"
+                                                )}
+                                            >
+                                                <item.icon className={cn("h-5 w-5", isSidebarOpen && "mr-2")} />
+                                                {isSidebarOpen && <span>{item.label}</span>}
+                                            </Button>
+                                        </Link>
+                                    ))}
                             </div>
                         </div>
                     </div>

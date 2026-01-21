@@ -14,9 +14,9 @@ export default async function AdminLayout({
         redirect("/auth/login");
     }
 
-    if (session.user.role !== "ADMIN") {
+    if (session.user.role !== "ADMIN" && session.user.role !== "LECTURER") {
         redirect("/dashboard");
     }
 
-    return <AdminLayoutWrapper>{children}</AdminLayoutWrapper>;
+    return <AdminLayoutWrapper role={session.user.role}>{children}</AdminLayoutWrapper>;
 }

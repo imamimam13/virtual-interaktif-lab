@@ -23,7 +23,11 @@ export default async function DashboardPage({
         redirect("/auth/login");
     }
 
-    if (session?.user?.role === "ADMIN" && resolvedSearchParams?.view !== "student") {
+    if (session.user.role === "ADMIN" && resolvedSearchParams?.view !== "student") {
+        redirect("/admin/dashboard");
+    }
+
+    if (session.user.role === "LECTURER" && resolvedSearchParams?.view !== "student") {
         redirect("/admin/dashboard");
     }
 
