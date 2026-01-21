@@ -218,6 +218,38 @@ export async function deleteUser(id: string) {
     }
 }
 
+export async function resetPassword(id: string, newPassword: string) {
+    try {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await prisma.user.update({
+            where: { id },
+            data: { password: hashedPassword }
+        });
+        revalidatePath("/admin/users");
+        return { message: "Password updated successfully" };
+    } catch (error) {
+        return { message: "Failed to update password" };
+    }
+}
+
+export async function updateUser(id: string, data: { name: string; email: string; role: string }) {
+    try {
+        await prisma.user.update({
+            where: { id },
+            data: {
+                name: data.name,
+                email: data.email,
+                role: data.role as any
+            }
+        });
+        revalidatePath("/admin/users");
+        return { message: "User updated successfully" };
+    } catch (error) {
+        console.error("Failed to update user:", error);
+        return { message: "Failed to update user" };
+    }
+}
+
 const CreateDepartmentSchema = z.object({
     name: z.string().min(3),
     level: z.string().min(2),

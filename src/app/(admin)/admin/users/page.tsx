@@ -4,16 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { Search, UserPlus, MoreVertical, Shield, User } from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Search, UserPlus, Shield, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import UserActions from "./user-actions";
 
 export default async function AdminUsersPage() {
     const users = await prisma.user.findMany({
@@ -48,7 +41,7 @@ export default async function AdminUsersPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        {users.map((user: { id: string; email: string; role: string }) => (
+                        {users.map((user: { id: string; email: string; role: string; name: string | null }) => (
                             <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors">
                                 <div className="flex items-center gap-4">
                                     <Avatar>
@@ -68,20 +61,7 @@ export default async function AdminUsersPage() {
                                     </div>
                                 </div>
 
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                            <MoreVertical className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                                        <DropdownMenuItem>Edit Profil</DropdownMenuItem>
-                                        <DropdownMenuItem>Reset Password</DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-red-600">Hapus Akun</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                <UserActions user={user} />
                             </div>
                         ))}
                     </div>
