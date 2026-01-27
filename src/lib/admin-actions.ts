@@ -248,7 +248,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         description,
         departmentId: isIndependent ? null : departmentId,
         isPublic,
-        certificateTemplateId: certificateTemplateId || null,
+        certificateTemplateId: isPublic ? null : (certificateTemplateId || null),
         instructor,
         grading,
         price: finalPrice,
