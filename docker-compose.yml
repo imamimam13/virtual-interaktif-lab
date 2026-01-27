@@ -10,11 +10,11 @@ services:
     ports:
       - "8795:3000"
     environment:
-      - DATABASE_URL=file:/app/prisma/dev.db
+      - DATABASE_URL=file:/app/db/prod.db
       - NEXTAUTH_SECRET=changethissecretinproduction
       - NEXTAUTH_URL=http://localhost:8795
     volumes:
       # Persist the local SQLite file to the container
-      # This maps your local 'prisma' folder (containing dev.db) to the container
-      - ./prisma:/app/prisma
+      # This maps your local 'prisma' folder (containing dev.db/prod.db) to the container's /app/db
+      - ./prisma:/app/db
       - ./public/uploads:/app/public/uploads
