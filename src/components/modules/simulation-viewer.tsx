@@ -14,9 +14,26 @@ export default function SimulationViewer({ url }: SimulationViewerProps) {
     useEffect(() => {
         let finalUrl = url;
 
+        // Try to parse if it's a JSON string (Proxy Config)
+        try {
+            if (url.trim().startsWith('{')) {
+                const config = JSON.parse(url);
+                if (config.type === 'PROXY' && config.url) {
+                    const proxyUrl = new URL('/api/proxy', window.location.origin);
+                    proxyUrl.searchParams.set('url', config.url);
+                    if (config.selector) {
+                        proxyUrl.searchParams.set('selector', config.selector);
+                    }
+                    finalUrl = proxyUrl.toString();
+                }
+            }
+        } catch (e) {
+            // Not JSON, continue as normal URL
+        }
+
         // PhET Localization Logic
-        if (url.includes("phet.colorado.edu")) {
-            const urlObj = new URL(url);
+        if (finalUrl.includes("phet.colorado.edu")) {
+            const urlObj = new URL(finalUrl);
             // Append ?locale=in if not present
             if (!urlObj.searchParams.has("locale")) {
                 urlObj.searchParams.set("locale", "in");

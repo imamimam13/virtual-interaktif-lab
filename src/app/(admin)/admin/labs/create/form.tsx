@@ -31,6 +31,7 @@ type LabData = {
     description: string;
     departmentId: string | null;
     certificateTemplateId?: string | null;
+    isPublic?: boolean;
     thumbnail: string | null;
     instructor: string | null;
     grading: string | null;
@@ -70,6 +71,7 @@ export default function LabForm({
     const isEdit = !!initialData;
     const isLecturer = role === "LECTURER";
     const [isIndependent, setIsIndependent] = useState(initialData ? !initialData.departmentId : false);
+    const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? false);
 
     // State for form validation
     const initialState: LabFormState = { message: null, errors: {}, payload: null };
@@ -150,6 +152,24 @@ export default function LabForm({
                                 <Label htmlFor="independent-mode" className="text-base font-medium">Lab Independen</Label>
                                 <p className="text-sm text-muted-foreground">
                                     Jika aktif, lab ini tidak terikat pada Program Studi tertentu (General).
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center space-x-4 border p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                            <Switch
+                                id="public-mode"
+                                name="isPublic"
+                                defaultChecked={isPublic}
+                                checked={isPublic}
+                                onCheckedChange={setIsPublic}
+                            />
+                            <input type="hidden" name="isPublic" value={isPublic.toString()} />
+                            <div className="flex-1">
+                                <Label htmlFor="public-mode" className="text-base font-medium">Public / Demo Lab</Label>
+                                <p className="text-sm text-muted-foreground">
+                                    Jika aktif, lab ini dapat diakses oleh publik (tanpa login) sebagai demo.
+                                    <br /><span className="text-xs font-bold text-yellow-600 dark:text-yellow-500">Note: Tidak ada tracking progress atau sertifikat untuk user public.</span>
                                 </p>
                             </div>
                         </div>

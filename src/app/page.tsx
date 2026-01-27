@@ -47,6 +47,11 @@ export default function LandingPage() {
                     Mulai Belajar <MoveRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
+                <Link href="/demo/labs">
+                  <Button variant="secondary" className="h-12 px-8 text-lg rounded-full">
+                    Lihat Demo
+                  </Button>
+                </Link>
                 <Link href="/about">
                   <Button variant="outline" className="h-12 px-8 text-lg rounded-full">
                     Pelajari Lebih Lanjut

@@ -65,6 +65,7 @@ model Lab {
   feePercentage     Int     @default(50) // Dosen Share (50%)
   lppmFeePercentage Int     @default(10) // LPPM Share (10%)
   bankDetails       String? // Virtual Account / Bank Transfer Info
+  isPublic          Boolean @default(false) // Public Access / Demo Lab
 
   departmentId String?
   department   Department?   @relation(fields: [departmentId], references: [id])

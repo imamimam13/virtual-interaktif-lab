@@ -26,6 +26,9 @@ function SubmitButton() {
 export default function CreateModuleForm({ labId }: { labId: string }) {
     const [state, dispatch] = useActionState(createModule, null);
     const [type, setType] = useState("VIDEO");
+    const [isGameExtractor, setIsGameExtractor] = useState(false);
+    const [cssSelector, setCssSelector] = useState("");
+    const [simUrl, setSimUrl] = useState("");
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
@@ -125,22 +128,80 @@ export default function CreateModuleForm({ labId }: { labId: string }) {
                                         defaultValue='[{"question": "Example?", "options": ["A", "B"], "answer": 0}]'
                                     />
                                 ) : (
-                                    <Input
-                                        name="content"
-                                        id="content"
-                                        placeholder={
-                                            type === "VIDEO" ? "https://youtube.com/..." :
-                                                type === "SIMULATION" ? "https://phet.colorado.edu/..." :
-                                                    "https://example.com/file.pdf"
-                                        }
-                                        required
-                                    />
+                                    !isGameExtractor && (
+                                        <Input
+                                            name="content"
+                                            id="content"
+                                            placeholder={
+                                                type === "VIDEO" ? "https://youtube.com/..." :
+                                                    type === "SIMULATION" ? "https://phet.colorado.edu/..." :
+                                                        "https://example.com/file.pdf"
+                                            }
+                                            required={!isGameExtractor}
+                                        />
+                                    )
                                 )}
                                 <p className="text-xs text-muted-foreground">
                                     {type === "QUIZ" ? "Enter quiz questions in JSON format." :
                                         type === "SIMULATION" ? "Direct URL to PhET or LabXchange HTML5 simulation." :
                                             "Provide the direct URL to the resource."}
                                 </p>
+
+                                {type === "SIMULATION" && (
+                                    <div className="mt-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <input
+                                                type="checkbox"
+                                                id="game-extractor"
+                                                className="h-4 w-4"
+                                                checked={isGameExtractor}
+                                                onChange={(e) => setIsGameExtractor(e.target.checked)}
+                                            />
+                                            <Label htmlFor="game-extractor" className="font-semibold cursor-pointer">Enable Game Extractor (Proxy)</Label>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mb-4">
+                                            Use this if you want to embed a game from a website (e.g. classicgamezone) and hide surrounding elements (ads, header, etc).
+                                        </p>
+
+                                        {isGameExtractor && (
+                                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="sim-url">Game Page URL</Label>
+                                                    <Input
+                                                        id="sim-url"
+                                                        placeholder="https://example.com/games/contra"
+                                                        value={simUrl}
+                                                        onChange={(e) => {
+                                                            setSimUrl(e.target.value);
+                                                            // update hidden content
+                                                            const json = JSON.stringify({ type: 'PROXY', url: e.target.value, selector: cssSelector });
+                                                            const hiddenInput = document.getElementById('content') as HTMLInputElement;
+                                                            if (hiddenInput) hiddenInput.value = json;
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="css-selector">CSS Selector (Element to Keep)</Label>
+                                                    <Input
+                                                        id="css-selector"
+                                                        placeholder="#game-container or canvas"
+                                                        value={cssSelector}
+                                                        onChange={(e) => {
+                                                            setCssSelector(e.target.value);
+                                                            // update hidden content
+                                                            const json = JSON.stringify({ type: 'PROXY', url: simUrl, selector: e.target.value });
+                                                            const hiddenInput = document.getElementById('content') as HTMLInputElement;
+                                                            if (hiddenInput) hiddenInput.value = json;
+                                                        }}
+                                                    />
+                                                    <p className="text-xs text-muted-foreground">Everything NOT matching this selector will be hidden.</p>
+                                                </div>
+                                                {/* Override the main content input */}
+                                                <input type="hidden" name="content" id="content" value={JSON.stringify({ type: 'PROXY', url: simUrl, selector: cssSelector })} />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
 

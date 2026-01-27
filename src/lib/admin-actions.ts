@@ -14,6 +14,7 @@ const CreateLabSchema = z.object({
     departmentId: z.string().optional().nullable().transform(val => val === "" ? null : val),
     certificateTemplateId: z.string().optional().nullable().transform(val => val === "" ? null : val),
     isIndependent: z.coerce.boolean(),
+    isPublic: z.coerce.boolean(),
     instructor: z.string().optional(),
     grading: z.string().optional(), // JSON
     price: z.coerce.number().min(0, "Price must be non-negative"),
@@ -29,6 +30,7 @@ export type LabFormState = {
         departmentId?: string[];
         certificateTemplateId?: string[];
         isIndependent?: string[];
+        isPublic?: string[];
         instructor?: string[];
         grading?: string[];
         price?: string[];
@@ -43,6 +45,7 @@ export type LabFormState = {
         departmentId: string;
         certificateTemplateId?: string;
         isIndependent: File | string | null;
+        isPublic: File | string | null;
         instructor?: string;
         grading?: string;
         price?: string;
@@ -59,6 +62,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         departmentId: formData.get("departmentId") as string,
         certificateTemplateId: formData.get("certificateTemplateId") as string,
         isIndependent: formData.get("isIndependent"),
+        isPublic: formData.get("isPublic"),
         instructor: formData.get("instructor") as string,
         grading: formData.get("grading") as string,
         price: formData.get("price") as string,
@@ -75,6 +79,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         departmentId: rawData.departmentId,
         certificateTemplateId: rawData.certificateTemplateId,
         isIndependent: rawData.isIndependent,
+        isPublic: rawData.isPublic,
         instructor: rawData.instructor,
         grading: rawData.grading,
         price: rawData.price,
@@ -93,7 +98,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
     }
 
     const {
-        title, description, departmentId, certificateTemplateId, isIndependent, instructor, grading,
+        title, description, departmentId, certificateTemplateId, isIndependent, isPublic, instructor, grading,
         price, feePercentage, lppmFeePercentage, bankDetails
     } = validatedFields.data;
 
@@ -124,6 +129,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
                 title,
                 description,
                 departmentId: isIndependent ? null : departmentId,
+                isPublic,
                 certificateTemplateId: certificateTemplateId || null,
                 thumbnail: "/images/placeholders/lab-default.jpg",
                 instructor,
@@ -156,6 +162,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         departmentId: formData.get("departmentId") as string,
         certificateTemplateId: formData.get("certificateTemplateId") as string,
         isIndependent: formData.get("isIndependent"),
+        isPublic: formData.get("isPublic"),
         instructor: formData.get("instructor") as string,
         grading: formData.get("grading") as string,
         price: formData.get("price") as string,
@@ -172,6 +179,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         departmentId: rawData.departmentId,
         certificateTemplateId: rawData.certificateTemplateId,
         isIndependent: rawData.isIndependent,
+        isPublic: rawData.isPublic,
         instructor: rawData.instructor,
         grading: rawData.grading,
         price: rawData.price,
@@ -189,7 +197,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
     }
 
     const {
-        title, description, departmentId, certificateTemplateId, isIndependent, instructor, grading,
+        title, description, departmentId, certificateTemplateId, isIndependent, isPublic, instructor, grading,
         price, feePercentage, lppmFeePercentage, bankDetails
     } = validatedFields.data;
 
@@ -232,6 +240,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         title,
         description,
         departmentId: isIndependent ? null : departmentId,
+        isPublic,
         certificateTemplateId: certificateTemplateId || null,
         instructor,
         grading,
