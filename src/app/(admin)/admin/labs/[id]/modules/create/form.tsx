@@ -254,10 +254,9 @@ export default function CreateModuleForm({ labId }: { labId: string }) {
                                                         }}
                                                     />
                                                     <p className="text-xs text-muted-foreground">
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Enter a direct link to a ROM file (.nes, .smc, .gba, etc).
-                                                            You can find public domain ROMs on GitHub or Archive.org.
-                                                        </p>
+                                                        Enter a direct link to a ROM file (.nes, .smc, .gba, etc).
+                                                        You can find public domain ROMs on GitHub or Archive.org.
+                                                    </p>
                                                 </div>
 
                                                 <div className="grid gap-2 border-t pt-2 mt-2">
