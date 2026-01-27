@@ -43,7 +43,7 @@ export type LabFormState = {
         title: string;
         description: string;
         departmentId: string;
-        certificateTemplateId?: string;
+        certificateTemplateId?: string | null;
         isIndependent: File | string | null;
         isPublic: File | string | null;
         instructor?: string;
