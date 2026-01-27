@@ -65,6 +65,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/seed_all.js ./seed_all.js
 RUN npm install bcryptjs prisma && \
     chown -R nextjs:nodejs node_modules
 
+# Ensure upload directory exists and is writable
+RUN mkdir -p public/uploads && chown -R nextjs:nodejs public/uploads
+
 
 USER nextjs
 

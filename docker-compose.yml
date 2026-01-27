@@ -17,3 +17,4 @@ services:
       # Persist the local SQLite file to the container
       # This maps your local 'prisma' folder (containing dev.db) to the container
       - ./prisma:/app/prisma
+      - ./public/uploads:/app/public/uploads
