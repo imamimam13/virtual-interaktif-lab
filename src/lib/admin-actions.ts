@@ -164,7 +164,7 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         departmentId: formData.get("departmentId") as string,
-        certificateTemplateId: formData.get("certificateTemplateId") as string,
+        certificateTemplateId: formData.get("certificateTemplateId") === "default" ? null : formData.get("certificateTemplateId") as string,
         isIndependent: formData.get("isIndependent"),
         isPublic: formData.get("isPublic"),
         instructor: formData.get("instructor") as string,
