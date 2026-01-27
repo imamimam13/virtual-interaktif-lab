@@ -142,9 +142,13 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
             } as any,
         });
     } catch (error) {
-        console.error("Database Error:", error);
+        console.error("Database Error FULL:", error);
+        // Try to verify if it's a specific Prisma error
+        if ((error as any).code === 'P2002') {
+            return { message: "Failed: A lab with this title already exists." };
+        }
         return {
-            message: "Database Error: Failed to Create Lab.",
+            message: `Database Error: ${(error as any).message || "Failed to Create Lab."}`,
             payload: rawData,
         };
     }

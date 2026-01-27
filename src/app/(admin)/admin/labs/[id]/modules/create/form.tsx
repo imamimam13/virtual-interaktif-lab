@@ -253,8 +253,47 @@ export default function CreateModuleForm({ labId }: { labId: string }) {
                                                         }}
                                                     />
                                                     <p className="text-xs text-muted-foreground">
-                                                        Enter a direct link to a ROM file (.nes, .smc, .gba, etc).
-                                                        You can find public domain ROMs on GitHub or Archive.org.
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Enter a direct link to a ROM file (.nes, .smc, .gba, etc).
+                                                            You can find public domain ROMs on GitHub or Archive.org.
+                                                        </p>
+                                                </div>
+
+                                                <div className="grid gap-2 border-t pt-2 mt-2">
+                                                    <Label>Or Upload Local ROM (Recommended)</Label>
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                            type="file"
+                                                            className="text-xs"
+                                                            onChange={async (e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (!file) return;
+
+                                                                const formData = new FormData();
+                                                                formData.append("file", file);
+
+                                                                // Show loading via toast or button text if possible, but for now simple alert
+                                                                const target = e.target as HTMLInputElement;
+                                                                target.disabled = true;
+
+                                                                const res = await uploadRom(formData);
+                                                                if (res.success && res.url) {
+                                                                    setRomUrl(res.url); // Use relative path
+                                                                    // Update hidden content
+                                                                    const json = JSON.stringify({ type: 'EMULATOR', romUrl: res.url, system: romSystem });
+                                                                    const hiddenInput = document.getElementById('content') as HTMLInputElement;
+                                                                    if (hiddenInput) hiddenInput.value = json;
+                                                                    alert("Upload Success!");
+                                                                } else {
+                                                                    alert("Upload Failed: " + res.message);
+                                                                }
+                                                                target.disabled = false;
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Upload .nes, .snes, .gba, .zip files directly to your server.
+                                                        Fixes "Network Error" issues.
                                                     </p>
                                                 </div>
 
