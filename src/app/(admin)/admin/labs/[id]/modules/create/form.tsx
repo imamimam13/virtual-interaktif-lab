@@ -23,12 +23,35 @@ function SubmitButton() {
     );
 }
 
+const PRESET_GAMES = [
+    // NES
+    { name: "Contra", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Contra%20(U)%20%5B!%5D.nes" },
+    { name: "Super Mario Bros", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Super%20Mario%20Bros.%20(JU)%20%5B!%5D.nes" },
+    { name: "Super Mario Bros 3", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Super%20Mario%20Bros.%203%20(U)%20(PRG1)%20%5B!%5D.nes" },
+    { name: "The Legend of Zelda", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Legend%20of%20Zelda,%20The%20(U)%20(PRG1).nes" },
+    { name: "Metroid", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Metroid%20(U)%20(PRG0)%20%5B!%5D.nes" },
+    { name: "Castlevania", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Castlevania%20(U)%20(PRG1)%20%5B!%5D.nes" },
+    { name: "Tetris", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Tetris%20(U)%20%5B!%5D.nes" },
+    { name: "Mega Man 2", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Mega%20Man%202%20(U)%20%5B!%5D.nes" },
+    { name: "Pac-Man", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Pac-Man%20(USA)%20(Namco).nes" },
+    { name: "Donkey Kong", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Donkey%20Kong%20(JU).nes" },
+    { name: "Punch-Out!!", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Punch-Out!!%20(U)%20%5B!%5D.nes" },
+    { name: "Final Fantasy", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Final%20Fantasy%20(U)%20%5B!%5D.nes" },
+
+    // GBA (Homebrew/Demos for legality/safety example)
+    { name: "Anguna (Homebrew RPG)", system: "gba", url: "https://raw.githubusercontent.com/retrobrews/gba-games/master/homebrews/Anguna/Anguna.gba" },
+
+    // Sega Genesis
+    { name: "Sonic The Hedgehog", system: "sega", url: "https://raw.githubusercontent.com/retrobrews/genesis-games/master/public-domain/Sonic%20the%20Hedgehog%20(USA).md" },
+];
+
 export default function CreateModuleForm({ labId }: { labId: string }) {
     const [state, dispatch] = useActionState(createModule, null);
     const [type, setType] = useState("VIDEO");
-    const [isGameExtractor, setIsGameExtractor] = useState(false);
-    const [cssSelector, setCssSelector] = useState("");
-    const [simUrl, setSimUrl] = useState("");
+
+    const [isEmulator, setIsEmulator] = useState(false);
+    const [romUrl, setRomUrl] = useState("");
+    const [romSystem, setRomSystem] = useState("nes");
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
@@ -128,7 +151,7 @@ export default function CreateModuleForm({ labId }: { labId: string }) {
                                         defaultValue='[{"question": "Example?", "options": ["A", "B"], "answer": 0}]'
                                     />
                                 ) : (
-                                    !isGameExtractor && (
+                                    !isEmulator && (
                                         <Input
                                             name="content"
                                             id="content"
@@ -137,7 +160,7 @@ export default function CreateModuleForm({ labId }: { labId: string }) {
                                                     type === "SIMULATION" ? "https://phet.colorado.edu/..." :
                                                         "https://example.com/file.pdf"
                                             }
-                                            required={!isGameExtractor}
+                                            required={!isEmulator}
                                         />
                                     )
                                 )}
@@ -148,56 +171,95 @@ export default function CreateModuleForm({ labId }: { labId: string }) {
                                 </p>
 
                                 {type === "SIMULATION" && (
-                                    <div className="mt-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
+                                    <div className="mt-4 p-4 border rounded-lg bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-800">
                                         <div className="flex items-center gap-2 mb-2">
                                             <input
                                                 type="checkbox"
-                                                id="game-extractor"
+                                                id="emulator-mode"
                                                 className="h-4 w-4"
-                                                checked={isGameExtractor}
-                                                onChange={(e) => setIsGameExtractor(e.target.checked)}
+                                                checked={isEmulator}
+                                                onChange={(e) => setIsEmulator(e.target.checked)}
                                             />
-                                            <Label htmlFor="game-extractor" className="font-semibold cursor-pointer">Enable Game Extractor (Proxy)</Label>
+                                            <Label htmlFor="emulator-mode" className="font-semibold cursor-pointer">Enable Emulator Mode (Retro Games)</Label>
                                         </div>
                                         <p className="text-xs text-muted-foreground mb-4">
-                                            Use this if you want to embed a game from a website (e.g. classicgamezone) and hide surrounding elements (ads, header, etc).
+                                            Play retro games directly in the browser using EmulatorJS.
                                         </p>
 
-                                        {isGameExtractor && (
+                                        {isEmulator && (
                                             <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="sim-url">Game Page URL</Label>
-                                                    <Input
-                                                        id="sim-url"
-                                                        placeholder="https://example.com/games/contra"
-                                                        value={simUrl}
-                                                        onChange={(e) => {
-                                                            setSimUrl(e.target.value);
-                                                            // update hidden content
-                                                            const json = JSON.stringify({ type: 'PROXY', url: e.target.value, selector: cssSelector });
+                                                    <Label>Quick Select Game (Optional)</Label>
+                                                    <Select onValueChange={(val) => {
+                                                        const game = PRESET_GAMES.find(g => g.name === val);
+                                                        if (game) {
+                                                            setRomSystem(game.system);
+                                                            setRomUrl(game.url);
+                                                            // Update hidden content
+                                                            const json = JSON.stringify({ type: 'EMULATOR', romUrl: game.url, system: game.system });
                                                             const hiddenInput = document.getElementById('content') as HTMLInputElement;
                                                             if (hiddenInput) hiddenInput.value = json;
-                                                        }}
-                                                    />
+                                                        }
+                                                    }}>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select a popular game..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {PRESET_GAMES.map(game => (
+                                                                <SelectItem key={game.name} value={game.name}>
+                                                                    {game.name} ({game.system.toUpperCase()})
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                 </div>
+
                                                 <div className="grid gap-2">
-                                                    <Label htmlFor="css-selector">CSS Selector (Element to Keep)</Label>
+                                                    <Label htmlFor="rom-system">Console System</Label>
+                                                    <Select value={romSystem} onValueChange={(val) => {
+                                                        setRomSystem(val);
+                                                        // Update hidden content
+                                                        const json = JSON.stringify({ type: 'EMULATOR', romUrl, system: val });
+                                                        const hiddenInput = document.getElementById('content') as HTMLInputElement;
+                                                        if (hiddenInput) hiddenInput.value = json;
+                                                    }}>
+                                                        <SelectTrigger id="rom-system">
+                                                            <SelectValue placeholder="Select System" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="nes">Nintendo (NES)</SelectItem>
+                                                            <SelectItem value="snes">Super Nintendo (SNES)</SelectItem>
+                                                            <SelectItem value="gba">GameBoy Advance (GBA)</SelectItem>
+                                                            <SelectItem value="sega">Sega Genesis (MegaDrive)</SelectItem>
+                                                            <SelectItem value="psx">PlayStation 1 (PSX)</SelectItem>
+                                                            <SelectItem value="n64">Nintendo 64</SelectItem>
+                                                            <SelectItem value="nds">Nintendo DS</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="rom-url">ROM URL (Direct Link)</Label>
                                                     <Input
-                                                        id="css-selector"
-                                                        placeholder="#game-container or canvas"
-                                                        value={cssSelector}
+                                                        id="rom-url"
+                                                        placeholder="https://example.com/files/contra.nes"
+                                                        value={romUrl}
                                                         onChange={(e) => {
-                                                            setCssSelector(e.target.value);
-                                                            // update hidden content
-                                                            const json = JSON.stringify({ type: 'PROXY', url: simUrl, selector: e.target.value });
+                                                            setRomUrl(e.target.value);
+                                                            // Update hidden content
+                                                            const json = JSON.stringify({ type: 'EMULATOR', romUrl: e.target.value, system: romSystem });
                                                             const hiddenInput = document.getElementById('content') as HTMLInputElement;
                                                             if (hiddenInput) hiddenInput.value = json;
                                                         }}
                                                     />
-                                                    <p className="text-xs text-muted-foreground">Everything NOT matching this selector will be hidden.</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Enter a direct link to a ROM file (.nes, .smc, .gba, etc).
+                                                        You can find public domain ROMs on GitHub or Archive.org.
+                                                    </p>
                                                 </div>
-                                                {/* Override the main content input */}
-                                                <input type="hidden" name="content" id="content" value={JSON.stringify({ type: 'PROXY', url: simUrl, selector: cssSelector })} />
+
+                                                {/* Hidden input override */}
+                                                <input type="hidden" name="content" id="content" value={JSON.stringify({ type: 'EMULATOR', romUrl, system: romSystem })} />
                                             </div>
                                         )}
                                     </div>

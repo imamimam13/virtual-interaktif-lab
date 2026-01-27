@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import EmulatorViewer from "./emulator-viewer";
 
 interface SimulationViewerProps {
     url: string;
@@ -41,8 +42,39 @@ export default function SimulationViewer({ url }: SimulationViewerProps) {
             finalUrl = urlObj.toString();
         }
 
+        // Check for Emulator config inside effect
+        const config = (() => {
+            try {
+                if (url.trim().startsWith('{')) {
+                    return JSON.parse(url);
+                }
+            } catch (e) { }
+            return null;
+        })();
+
+        if (config?.type === 'EMULATOR') {
+            // Let the component handle it
+            setIsLoading(false);
+            return; // Skip setting src for emulator
+        }
+
         setSrc(finalUrl);
     }, [url]);
+
+    // Check if it's an Emulator Config
+    const emulatorConfig = (() => {
+        try {
+            if (url.trim().startsWith('{')) {
+                const parsed = JSON.parse(url);
+                if (parsed.type === "EMULATOR") return parsed;
+            }
+        } catch (e) { }
+        return null;
+    })();
+
+    if (emulatorConfig) {
+        return <EmulatorViewer romUrl={emulatorConfig.romUrl} system={emulatorConfig.system} />;
+    }
 
     return (
         <div className="w-full h-[calc(100vh-12rem)] min-h-[500px] bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm relative">
