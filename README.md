@@ -1,5 +1,7 @@
 # Virtual Interaktif Lab
 
+https://doi.org/10.5281/zenodo.19080233
+
 ![Virtual Lab Logo](/public/logo.png)
 
 Platform pembelajaran laboratorium virtual yang interaktif dan modern, dibangun dengan Next.js 15, Prisma, dan shadcn/ui.
