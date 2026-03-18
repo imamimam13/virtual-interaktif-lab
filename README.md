@@ -1,6 +1,7 @@
 # Virtual Interaktif Lab
 
-https://doi.org/10.5281/zenodo.19080233
+<a href="https://doi.org/10.5281/zenodo.19080233"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.19080233.svg" alt="DOI"></a>
+
 
 ![Virtual Lab Logo](/public/logo.png)
 
