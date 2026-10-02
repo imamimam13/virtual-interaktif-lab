@@ -1,11 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, FlaskConical, Activity, Plus } from "lucide-react";
+import { Users, FlaskConical, Activity, Plus, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
     const session = await getServerSession(authOptions);
@@ -15,39 +17,62 @@ export default async function AdminDashboardPage() {
     if (!user) redirect("/auth/login");
 
     const isLecturer = user.role === "LECTURER";
+    const totalSystemLabs = await prisma.lab.count();
 
     // --- LECTURER VIEW ---
     if (isLecturer) {
-        // Stats for Lecturer
-        const instructorName = user.name ?? "UNKNOWN_INSTRUCTOR";
+        const instructorName = user.name || user.email;
 
+        // Count my labs (matching name or email)
         const myLabsVal = await prisma.lab.count({
-            where: { instructor: instructorName }
+            where: {
+                OR: [
+                    { instructor: instructorName },
+                    { instructor: user.name || undefined },
+                    { instructor: user.email },
+                ].filter(Boolean) as any
+            }
         });
 
         // Count enrollments in my labs
         const myEnrollments = await prisma.enrollment.count({
             where: {
-                lab: { instructor: instructorName } // Filtering by name as per current schema architecture
+                lab: {
+                    OR: [
+                        { instructor: instructorName },
+                        { instructor: user.name || undefined },
+                        { instructor: user.email },
+                    ].filter(Boolean) as any
+                }
             }
         });
 
         // Calculate Revenue (Instructor Share)
-        // Calculate Revenue (Instructor Share)
-        // Need to fetch paid enrollments
         const paidEnrollments: any[] = await prisma.enrollment.findMany({
             where: {
                 paymentStatus: "PAID",
-                lab: { instructor: instructorName }
+                lab: {
+                    OR: [
+                        { instructor: instructorName },
+                        { instructor: user.name || undefined },
+                        { instructor: user.email },
+                    ].filter(Boolean) as any
+                }
             } as any,
             select: { instructorShare: true }
         });
         const myRevenue = paidEnrollments.reduce((acc, curr) => acc + (curr.instructorShare || 0), 0);
 
-        // Fetch My Recent Labs
-        const myRecentLabs = await prisma.lab.findMany({
-            where: { instructor: instructorName },
-            take: 5,
+        // Fetch My Recent Labs (or all recent labs if none created yet)
+        let displayLabs = await prisma.lab.findMany({
+            where: {
+                OR: [
+                    { instructor: instructorName },
+                    { instructor: user.name || undefined },
+                    { instructor: user.email },
+                ].filter(Boolean) as any
+            },
+            take: 6,
             orderBy: { createdAt: "desc" },
             include: {
                 department: true,
@@ -55,40 +80,59 @@ export default async function AdminDashboardPage() {
             }
         });
 
+        const isShowingAllCampusLabs = displayLabs.length === 0;
+        if (isShowingAllCampusLabs) {
+            displayLabs = await prisma.lab.findMany({
+                take: 6,
+                orderBy: { createdAt: "desc" },
+                include: {
+                    department: true,
+                    _count: { select: { modules: true } }
+                }
+            });
+        }
+
         return (
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight">Dosen Dashboard</h2>
-                        <p className="text-muted-foreground">Selamat datang, {user.name}. Berikut ringkasan kelas Anda.</p>
+                        <p className="text-muted-foreground">Selamat datang, {user.name || user.email}. Kelola praktikum dan materi lab Anda.</p>
                     </div>
-                    <Link href="/admin/labs/create">
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Buat Lab Baru
-                        </Button>
-                    </Link>
+                    <div className="flex gap-2">
+                        <Link href="/admin/labs">
+                            <Button variant="outline">
+                                <BookOpen className="mr-2 h-4 w-4" /> Kelola Semua Lab ({totalSystemLabs})
+                            </Button>
+                        </Link>
+                        <Link href="/admin/labs/create">
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" /> Buat Lab Baru
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Stats */}
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Kelas Saya</CardTitle>
+                            <CardTitle className="text-sm font-medium">Kelas / Lab Saya</CardTitle>
                             <FlaskConical className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{myLabsVal}</div>
-                            <p className="text-xs text-muted-foreground">Lab aktif dikelola</p>
+                            <p className="text-xs text-muted-foreground">Dari total {totalSystemLabs} lab di kampus</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Mahasiswa</CardTitle>
+                            <CardTitle className="text-sm font-medium">Total Mahasiswa Terdaftar</CardTitle>
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{myEnrollments}</div>
-                            <p className="text-xs text-muted-foreground">Terdaftar di kelas Anda</p>
+                            <p className="text-xs text-muted-foreground">Terdaftar di kelas praktikum Anda</p>
                         </CardContent>
                     </Card>
                     <Card>
@@ -97,39 +141,50 @@ export default async function AdminDashboardPage() {
                             <Activity className="h-4 w-4 text-green-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">Rp {myRevenue.toLocaleString()}</div>
+                            <div className="text-2xl font-bold">Rp {myRevenue.toLocaleString("id-ID")}</div>
                             <p className="text-xs text-muted-foreground">Total bagi hasil (Paid Labs)</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* My Recent Labs */}
+                {/* Recent Labs */}
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Kelas Terbaru Saya</CardTitle>
-                        <CardDescription>Daftar lab yang Anda kelola.</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>{isShowingAllCampusLabs ? "Daftar Laboratorium Kampus" : "Kelas / Lab Saya"}</CardTitle>
+                            <CardDescription>
+                                {isShowingAllCampusLabs
+                                    ? "Berikut laboratorium yang ada di sistem kampus. Anda dapat mengedit materi atau membuat lab baru."
+                                    : "Daftar laboratorium praktikum yang Anda kelola."}
+                            </CardDescription>
+                        </div>
+                        <Link href="/admin/labs">
+                            <Button variant="ghost" size="sm">Lihat Semua →</Button>
+                        </Link>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {myRecentLabs.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-4">Anda belum membuat kelas.</p>
+                            {displayLabs.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-6">Belum ada laboratorium yang dibuat.</p>
                             ) : (
-                                myRecentLabs.map((lab: any) => (
+                                displayLabs.map((lab: any) => (
                                     <div key={lab.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                                         <div className="flex items-center gap-4">
                                             <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-xl">
-                                                👨‍🏫
+                                                🧪
                                             </div>
                                             <div>
-                                                <p className="font-medium">{lab.title}</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {lab.department?.name || "Independen"} • {lab._count.modules} Modul
+                                                <p className="font-semibold text-sm">{lab.title}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {lab.department?.name || "Independen"} • {lab._count.modules} Modul • Dosen: <b>{lab.instructor || "Umum"}</b>
                                                 </p>
                                             </div>
                                         </div>
-                                        <Link href={`/admin/labs/${lab.id}/modules`}>
-                                            <Button variant="outline" size="sm">Kelola Materi</Button>
-                                        </Link>
+                                        <div className="flex gap-2">
+                                            <Link href={`/admin/labs/${lab.id}/modules`}>
+                                                <Button variant="outline" size="sm">Kelola Materi</Button>
+                                            </Link>
+                                        </div>
                                     </div>
                                 ))
                             )}
@@ -145,9 +200,8 @@ export default async function AdminDashboardPage() {
     const labCount = await prisma.lab.count();
     const departmentCount = await prisma.department.count();
 
-    // Fetch recent labs
     const recentLabs = await prisma.lab.findMany({
-        take: 5,
+        take: 6,
         orderBy: { createdAt: 'desc' },
         include: {
             department: true,
@@ -162,20 +216,27 @@ export default async function AdminDashboardPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
-                    <p className="text-muted-foreground">Monitor platform statistics and manage virtual labs.</p>
+                    <p className="text-muted-foreground">Monitor statistik platform dan kelola laboratorium virtual.</p>
                 </div>
-                <Link href="/admin/labs/create">
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" /> Buat Lab Baru
-                    </Button>
-                </Link>
+                <div className="flex gap-2">
+                    <Link href="/admin/labs">
+                        <Button variant="outline">
+                            <BookOpen className="mr-2 h-4 w-4" /> Kelola Lab ({labCount})
+                        </Button>
+                    </Link>
+                    <Link href="/admin/labs/create">
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" /> Buat Lab Baru
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Stats */}
             <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Mahasiswa</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Pengguna</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -190,31 +251,36 @@ export default async function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{labCount}</div>
-                        <p className="text-xs text-muted-foreground">Across {departmentCount} Departments</p>
+                        <p className="text-xs text-muted-foreground">Di {departmentCount} Program Studi</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Modul Completed</CardTitle>
-                        <Activity className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Status Integrasi</CardTitle>
+                        <Activity className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">0</div>
-                        <p className="text-xs text-muted-foreground">Coming Soon</p>
+                        <div className="text-2xl font-bold text-emerald-600">Online</div>
+                        <p className="text-xs text-muted-foreground">SIAKAD SSO & REST API Aktif</p>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Recent Labs */}
             <Card>
-                <CardHeader>
-                    <CardTitle>Laboratorium Terbaru</CardTitle>
-                    <CardDescription>Daftar lab yang baru saja ditambahkan atau diperbarui.</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Laboratorium Terbaru</CardTitle>
+                        <CardDescription>Daftar lab yang baru saja ditambahkan atau diperbarui.</CardDescription>
+                    </div>
+                    <Link href="/admin/labs">
+                        <Button variant="ghost" size="sm">Lihat Semua →</Button>
+                    </Link>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         {recentLabs.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">Belum ada laboratorium.</p>
+                            <p className="text-sm text-muted-foreground text-center py-6">Belum ada laboratorium.</p>
                         ) : (
                             recentLabs.map((lab: any) => (
                                 <div key={lab.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
@@ -223,14 +289,14 @@ export default async function AdminDashboardPage() {
                                             🧪
                                         </div>
                                         <div>
-                                            <p className="font-medium">{lab.title}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {lab.department?.name || "Independen"} • {lab._count.modules} Modul
+                                            <p className="font-semibold text-sm">{lab.title}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {lab.department?.name || "Independen"} • {lab._count.modules} Modul • Dosen: <b>{lab.instructor || "Umum"}</b>
                                             </p>
                                         </div>
                                     </div>
                                     <Link href={`/admin/labs/${lab.id}/modules`}>
-                                        <Button variant="outline" size="sm">Manage Modules</Button>
+                                        <Button variant="outline" size="sm">Kelola Materi</Button>
                                     </Link>
                                 </div>
                             ))

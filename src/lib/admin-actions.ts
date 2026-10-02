@@ -9,17 +9,17 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 
 const CreateLabSchema = z.object({
-    title: z.string().min(3, "Title must be at least 3 characters"),
-    description: z.string().min(10, "Description must be at least 10 characters"),
-    departmentId: z.string().optional().nullable().transform(val => val === "" ? null : val),
-    certificateTemplateId: z.string().optional().nullable().transform(val => val === "" ? null : val),
-    isIndependent: z.coerce.boolean(),
-    isPublic: z.coerce.boolean(),
+    title: z.string().min(1, "Judul laboratorium wajib diisi"),
+    description: z.string().min(1, "Deskripsi laboratorium wajib diisi"),
+    departmentId: z.string().optional().nullable().transform(val => (val === "" || val === "undefined" || val === "null") ? null : val),
+    certificateTemplateId: z.string().optional().nullable().transform(val => (val === "" || val === "default" || val === "undefined" || val === "null") ? null : val),
+    isIndependent: z.preprocess((val) => val === true || val === "true" || val === "on" || val === 1 || val === "1", z.boolean()),
+    isPublic: z.preprocess((val) => val === true || val === "true" || val === "on" || val === 1 || val === "1", z.boolean()),
     instructor: z.string().optional(),
     grading: z.string().optional(), // JSON
-    price: z.coerce.number().min(0, "Price must be non-negative"),
-    feePercentage: z.coerce.number().min(0).max(100, "Percentage must be 0-100"),
-    lppmFeePercentage: z.coerce.number().min(0).max(100, "Percentage must be 0-100"),
+    price: z.coerce.number().min(0, "Price must be non-negative").default(0),
+    feePercentage: z.coerce.number().min(0).max(100, "Percentage must be 0-100").default(50),
+    lppmFeePercentage: z.coerce.number().min(0).max(100, "Percentage must be 0-100").default(10),
     bankDetails: z.string().optional(),
 });
 
@@ -124,6 +124,8 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
     }
 
     try {
+        const finalInstructor = instructor || session?.user?.name || session?.user?.email || "Dosen Pengampu";
+
         await prisma.lab.create({
             data: {
                 title,
@@ -132,7 +134,7 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
                 isPublic,
                 certificateTemplateId: isPublic ? null : (certificateTemplateId || null),
                 thumbnail: "/images/placeholders/lab-default.jpg",
-                instructor,
+                instructor: finalInstructor,
                 grading,
                 price: finalPrice,
                 requestedPrice: finalRequestedPrice,
@@ -239,20 +241,21 @@ export async function updateLab(prevState: LabFormState, formData: FormData): Pr
         }
     }
 
-    // Determine data object to update (handle undefined requestedPrice)
-    const updateData: any = {
-        title,
-        description,
-        departmentId: isIndependent ? null : departmentId,
-        isPublic,
-        certificateTemplateId: isPublic ? null : (certificateTemplateId || null),
-        instructor,
-        grading,
-        price: finalPrice,
-        feePercentage: finalFee,
-        lppmFeePercentage: finalLppmFee,
-        bankDetails
-    };
+        const finalInstructor = instructor || session?.user?.name || session?.user?.email || "Dosen Pengampu";
+
+        const updateData: any = {
+            title,
+            description,
+            departmentId: isIndependent ? null : departmentId,
+            isPublic,
+            certificateTemplateId: isPublic ? null : (certificateTemplateId || null),
+            instructor: finalInstructor,
+            grading,
+            price: finalPrice,
+            feePercentage: finalFee,
+            lppmFeePercentage: finalLppmFee,
+            bankDetails
+        };
 
     if (finalRequestedPrice !== undefined) {
         updateData.requestedPrice = finalRequestedPrice;

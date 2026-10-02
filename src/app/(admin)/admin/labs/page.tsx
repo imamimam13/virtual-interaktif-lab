@@ -13,14 +13,7 @@ export default async function AdminLabsPage() {
     const session = await getServerSession(authOptions);
     if (!session?.user) redirect("/auth/login");
 
-    const isLecturer = session.user.role === "LECTURER";
-
-    const whereClause = isLecturer
-        ? { instructor: session.user.name ?? "UNKNOWN_INSTRUCTOR" }
-        : {};
-
     const labs = await prisma.lab.findMany({
-        where: whereClause,
         include: {
             department: true,
             _count: {
