@@ -72,7 +72,8 @@ const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(({ videoI
                 playerVars: {
                     'playsinline': 1,
                     'modestbranding': 1,
-                    'rel': 0
+                    'rel': 0,
+                    'iv_load_policy': 3,
                 },
                 events: {
                     'onReady': (event: any) => {
@@ -103,10 +104,29 @@ const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(({ videoI
     }, [videoId]);
 
     return (
-        <div className="w-full h-full relative bg-black rounded-xl overflow-hidden">
+        <div 
+            className="w-full h-full relative bg-black rounded-xl overflow-hidden select-none"
+            onContextMenu={(e) => e.preventDefault()}
+        >
             <div ref={containerRef} className="w-full h-full" />
+            
+            {/* Anti-cheat overlays to block direct clickthrough to YouTube */}
+            {/* Top overlay to block title, channel info, and share button */}
+            <div 
+                className="absolute top-0 left-0 right-0 h-16 z-20 pointer-events-auto cursor-default" 
+                title=""
+                onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Bottom-right overlay to block 'Watch on YouTube' button / YouTube logo */}
+            <div 
+                className="absolute bottom-0 right-0 w-48 h-14 z-20 pointer-events-auto cursor-default" 
+                title=""
+                onClick={(e) => e.stopPropagation()}
+            />
+
             {loading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white z-10">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white z-30">
                     <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
             )}

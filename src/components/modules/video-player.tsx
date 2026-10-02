@@ -23,15 +23,30 @@ export default function VideoPlayer({ content, onComplete }: VideoPlayerProps) {
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="aspect-video w-full bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+            <div 
+                className="aspect-video w-full bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 relative select-none"
+                onContextMenu={(e) => e.preventDefault()}
+            >
                 {youtubeId ? (
-                    <iframe
-                        className="w-full h-full"
-                        src={`https://www.youtube.com/embed/${youtubeId}`}
-                        title="Video Module"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                    />
+                    <>
+                        <iframe
+                            className="w-full h-full"
+                            src={`https://www.youtube.com/embed/${youtubeId}?modestbranding=1&rel=0&iv_load_policy=3&playsinline=1`}
+                            title="Video Module"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        />
+                        {/* Top bar shield */}
+                        <div 
+                            className="absolute top-0 left-0 right-0 h-16 z-20 pointer-events-auto cursor-default"
+                            onClick={(e) => e.stopPropagation()} 
+                        />
+                        {/* Bottom-right shield (blocks 'Watch on YouTube' button) */}
+                        <div 
+                            className="absolute bottom-0 right-0 w-48 h-14 z-20 pointer-events-auto cursor-default"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </>
                 ) : (
                     <div className="flex items-center justify-center h-full text-white">
                         <p>Video URL not supported or invalid.</p>

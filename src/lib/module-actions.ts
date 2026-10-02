@@ -107,9 +107,30 @@ export async function deleteModule(id: string, labId: string) {
     try {
         await prisma.module.delete({ where: { id } });
         revalidatePath(`/admin/labs/${labId}/modules`);
+        revalidatePath(`/dashboard/labs/${labId}`);
         return { message: "Module deleted" };
     } catch (error) {
         return { message: "Failed to delete module" };
+    }
+}
+
+export async function reorderModules(labId: string, orderedModuleIds: string[]) {
+    try {
+        await prisma.$transaction(
+            orderedModuleIds.map((id, index) =>
+                prisma.module.update({
+                    where: { id },
+                    data: { order: index + 1 }
+                })
+            )
+        );
+
+        revalidatePath(`/admin/labs/${labId}/modules`);
+        revalidatePath(`/dashboard/labs/${labId}`);
+        return { success: true };
+    } catch (error) {
+        console.error("Error reordering modules:", error);
+        return { success: false, error: "Gagal menyimpan urutan modul" };
     }
 }
 

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { deleteModule } from "@/lib/module-actions";
 import SmartPdfUploader from "@/components/admin/smart-pdf-uploader";
 
+import DraggableModuleList from "@/components/admin/draggable-module-list";
+
 export default async function ModuleManagerPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: labId } = await params;
 
@@ -22,21 +24,6 @@ export default async function ModuleManagerPage({ params }: { params: Promise<{ 
         return <div>Lab not found</div>;
     }
 
-    async function handleDelete(moduleId: string) {
-        "use server";
-        await deleteModule(moduleId, labId);
-    }
-
-    const getIcon = (type: string) => {
-        switch (type) {
-            case "INSTRUCTION": return <BookOpen className="h-5 w-5 text-indigo-500" />;
-            case "VIDEO": return <Video className="h-5 w-5 text-blue-500" />;
-            case "PDF": return <FileText className="h-5 w-5 text-red-500" />;
-            case "QUIZ": return <HelpCircle className="h-5 w-5 text-yellow-500" />;
-            default: return <FileText className="h-5 w-5" />;
-        }
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
@@ -46,13 +33,13 @@ export default async function ModuleManagerPage({ params }: { params: Promise<{ 
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold">Manage Modules: {lab.title}</h1>
-                    <p className="text-muted-foreground">Manage learning materials for this laboratory.</p>
+                    <h1 className="text-2xl font-bold">Kelola Modul: {lab.title}</h1>
+                    <p className="text-muted-foreground">Atur materi dan urutan pembelajaran untuk laboratorium ini.</p>
                 </div>
                 <div className="ml-auto">
                     <Link href={`/admin/labs/${labId}/modules/create`}>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Add Module
+                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                            <Plus className="mr-2 h-4 w-4" /> Tambah Modul
                         </Button>
                     </Link>
                 </div>
@@ -60,52 +47,14 @@ export default async function ModuleManagerPage({ params }: { params: Promise<{ 
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Daftar Modul</CardTitle>
-                    <CardDescription>Kelola urutan dan konten modul.</CardDescription>
+                    <CardTitle>Daftar Modul Pembelajaran</CardTitle>
+                    <CardDescription>
+                        Kelola konten materi dan atur urutan kemunculan modul untuk mahasiswa.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-
                     <SmartPdfUploader labId={labId} />
-
-                    {lab.modules.length === 0 ? (
-                        <div className="text-center py-10 border-2 border-dashed rounded-lg text-muted-foreground">
-                            No modules yet. Click "Add Module" to start.
-                        </div>
-                    ) : (
-                        lab.modules.map((module: any, index: number) => (
-                            <div key={module.id} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-background p-2 rounded-full border shadow-sm font-mono text-sm font-bold w-8 h-8 flex items-center justify-center">
-                                        {index + 1}
-                                    </div>
-                                    <div className="bg-secondary/20 p-2 rounded-md">
-                                        {getIcon(module.type)}
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold">{module.title}</h3>
-                                        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{module.type}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Link href={`/dashboard/module/${module.id}`} target="_blank">
-                                        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs text-indigo-600 dark:text-indigo-400 border-indigo-200 hover:bg-indigo-50">
-                                            <Eye className="h-3.5 w-3.5" /> Preview
-                                        </Button>
-                                    </Link>
-                                    <Link href={`/admin/labs/${labId}/modules/${module.id}/edit`}>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                    </Link>
-                                    <form action={handleDelete.bind(null, module.id)}>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50">
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </form>
-                                </div>
-                            </div>
-                        ))
-                    )}
+                    <DraggableModuleList labId={labId} initialModules={lab.modules} />
                 </CardContent>
             </Card>
         </div>
