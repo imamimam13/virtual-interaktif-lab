@@ -58,6 +58,7 @@ export default function LabForm({
     templates,
     initialData,
     role = "LECTURER",
+    currentUserName = "",
     defaultDosenFee = 50,
     defaultLppmFee = 10
 }: {
@@ -65,6 +66,7 @@ export default function LabForm({
     templates?: Template[],
     initialData?: LabData,
     role?: string,
+    currentUserName?: string,
     defaultDosenFee?: number,
     defaultLppmFee?: number
 }) {
@@ -78,6 +80,8 @@ export default function LabForm({
     // Choose action based on mode
     const action = isEdit ? updateLab : createLab;
     const [state, dispatch] = useActionState(action, initialState);
+
+    const defaultInstructorValue = state?.payload?.instructor || initialData?.instructor || (isLecturer ? currentUserName : "");
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
@@ -117,14 +121,20 @@ export default function LabForm({
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="instructor">Nama Dosen / Instruktur</Label>
+                            <Label htmlFor="instructor">Nama Dosen / Instruktur Pengampu</Label>
                             <Input
                                 id="instructor"
                                 name="instructor"
                                 placeholder="Contoh: Dr. Budi Santoso"
-                                defaultValue={state?.payload?.instructor || initialData?.instructor || ""}
+                                defaultValue={defaultInstructorValue}
+                                readOnly={isLecturer && !!currentUserName}
+                                className={isLecturer && currentUserName ? "bg-muted font-medium cursor-not-allowed" : ""}
                             />
-                            <p className="text-xs text-muted-foreground">Nama dosen yang bertanggung jawab (Dapat diisi meskipun dibuat oleh admin).</p>
+                            <p className="text-xs text-muted-foreground">
+                                {isLecturer
+                                    ? "Laboratorium akan otomatis dikaitkan dengan akun Dosen Anda."
+                                    : "Nama dosen yang bertanggung jawab atas modul lab ini."}
+                            </p>
                         </div>
 
                         <div className="grid gap-2">

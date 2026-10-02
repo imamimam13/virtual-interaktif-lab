@@ -47,13 +47,18 @@ export default async function LabDetailsPage({ params }: { params: Promise<{ id:
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <Link href={`/admin/labs/${lab.id}/modules`}>
+                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                            Kelola Materi Modul
+                        </Button>
+                    </Link>
                     <Link href={`/api/labs/${lab.id}/export-grades`} target="_blank">
                         <Button variant="outline">
-                            <Download className="mr-2 h-4 w-4" /> Export Grades (CSV)
+                            <Download className="mr-2 h-4 w-4" /> Export Nilai
                         </Button>
                     </Link>
                     <Link href={`/admin/labs/${lab.id}/edit`}>
-                        <Button>
+                        <Button variant="outline">
                             <Edit className="mr-2 h-4 w-4" /> Edit Lab
                         </Button>
                     </Link>

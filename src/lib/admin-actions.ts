@@ -123,10 +123,11 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
         finalLppmFee = systemLppmFee ? parseInt(systemLppmFee) : 10;
     }
 
+    let newLabId: string | null = null;
     try {
         const finalInstructor = instructor || session?.user?.name || session?.user?.email || "Dosen Pengampu";
 
-        await prisma.lab.create({
+        const newLab = await prisma.lab.create({
             data: {
                 title,
                 description,
@@ -143,9 +144,9 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
                 bankDetails
             } as any,
         });
+        newLabId = newLab.id;
     } catch (error) {
         console.error("Database Error FULL:", error);
-        // Try to verify if it's a specific Prisma error
         if ((error as any).code === 'P2002') {
             return { message: "Failed: A lab with this title already exists." };
         }
@@ -156,8 +157,13 @@ export async function createLab(prevState: LabFormState, formData: FormData): Pr
     }
 
     revalidatePath("/admin/labs");
+    revalidatePath("/admin/dashboard");
     revalidatePath("/dashboard");
-    redirect("/admin/labs");
+    if (newLabId) {
+        redirect(`/admin/labs/${newLabId}/modules`);
+    } else {
+        redirect("/admin/labs");
+    }
 }
 
 export async function updateLab(prevState: LabFormState, formData: FormData): Promise<LabFormState> {

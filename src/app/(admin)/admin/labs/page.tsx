@@ -13,7 +13,22 @@ export default async function AdminLabsPage() {
     const session = await getServerSession(authOptions);
     if (!session?.user) redirect("/auth/login");
 
+    const isLecturer = session.user.role === "LECTURER";
+    const userName = session.user.name?.trim();
+    const userEmail = session.user.email?.trim();
+
+    // Lecturers only see their own labs; Superadmin sees all labs
+    const whereClause = isLecturer
+        ? {
+            OR: [
+                ...(userName ? [{ instructor: userName }] : []),
+                ...(userEmail ? [{ instructor: userEmail }] : []),
+            ]
+          }
+        : {};
+
     const labs = await prisma.lab.findMany({
+        where: whereClause,
         include: {
             department: true,
             _count: {
@@ -27,17 +42,23 @@ export default async function AdminLabsPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Kelola Laboratorium</h1>
-                    <p className="text-muted-foreground">Daftar semua laboratorium yang tersedia.</p>
+                    <h1 className="text-3xl font-bold">{isLecturer ? "Laboratorium / Kelas Saya" : "Kelola Laboratorium"}</h1>
+                    <p className="text-muted-foreground">
+                        {isLecturer
+                            ? "Daftar laboratorium dan materi praktikum yang Anda ampu."
+                            : "Daftar semua laboratorium yang terdaftar di sistem."}
+                    </p>
                 </div>
                 <div className="flex gap-2">
-                    <Link href="/admin/labs/import">
-                        <Button variant="outline">Import CSV</Button>
-                    </Link>
+                    {!isLecturer && (
+                        <Link href="/admin/labs/import">
+                            <Button variant="outline">Import CSV</Button>
+                        </Link>
+                    )}
                     <Link href="/admin/labs/create">
                         <Button>
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Buat Lab
+                            Buat Lab Baru
                         </Button>
                     </Link>
                 </div>

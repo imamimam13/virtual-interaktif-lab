@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, FlaskConical, Activity, Plus, BookOpen } from "lucide-react";
+import { Users, FlaskConical, Activity, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -17,62 +17,42 @@ export default async function AdminDashboardPage() {
     if (!user) redirect("/auth/login");
 
     const isLecturer = user.role === "LECTURER";
-    const totalSystemLabs = await prisma.lab.count();
 
-    // --- LECTURER VIEW ---
+    // --- LECTURER VIEW (Strict Isolation: Only Own Labs) ---
     if (isLecturer) {
-        const instructorName = user.name || user.email;
+        const lecturerFilter = {
+            OR: [
+                ...(user.name ? [{ instructor: user.name }] : []),
+                ...(user.email ? [{ instructor: user.email }] : []),
+            ]
+        };
 
-        // Count my labs (matching name or email)
+        // Count only my labs
         const myLabsVal = await prisma.lab.count({
-            where: {
-                OR: [
-                    { instructor: instructorName },
-                    { instructor: user.name || undefined },
-                    { instructor: user.email },
-                ].filter(Boolean) as any
-            }
+            where: lecturerFilter
         });
 
-        // Count enrollments in my labs
+        // Count enrollments in only my labs
         const myEnrollments = await prisma.enrollment.count({
             where: {
-                lab: {
-                    OR: [
-                        { instructor: instructorName },
-                        { instructor: user.name || undefined },
-                        { instructor: user.email },
-                    ].filter(Boolean) as any
-                }
+                lab: lecturerFilter
             }
         });
 
-        // Calculate Revenue (Instructor Share)
+        // Calculate Revenue (Instructor Share from my labs)
         const paidEnrollments: any[] = await prisma.enrollment.findMany({
             where: {
                 paymentStatus: "PAID",
-                lab: {
-                    OR: [
-                        { instructor: instructorName },
-                        { instructor: user.name || undefined },
-                        { instructor: user.email },
-                    ].filter(Boolean) as any
-                }
+                lab: lecturerFilter
             } as any,
             select: { instructorShare: true }
         });
         const myRevenue = paidEnrollments.reduce((acc, curr) => acc + (curr.instructorShare || 0), 0);
 
-        // Fetch My Recent Labs (or all recent labs if none created yet)
-        let displayLabs = await prisma.lab.findMany({
-            where: {
-                OR: [
-                    { instructor: instructorName },
-                    { instructor: user.name || undefined },
-                    { instructor: user.email },
-                ].filter(Boolean) as any
-            },
-            take: 6,
+        // Fetch My Recent Labs (strictly only my labs)
+        const myLabs = await prisma.lab.findMany({
+            where: lecturerFilter,
+            take: 10,
             orderBy: { createdAt: "desc" },
             include: {
                 department: true,
@@ -80,31 +60,14 @@ export default async function AdminDashboardPage() {
             }
         });
 
-        const isShowingAllCampusLabs = displayLabs.length === 0;
-        if (isShowingAllCampusLabs) {
-            displayLabs = await prisma.lab.findMany({
-                take: 6,
-                orderBy: { createdAt: "desc" },
-                include: {
-                    department: true,
-                    _count: { select: { modules: true } }
-                }
-            });
-        }
-
         return (
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight">Dosen Dashboard</h2>
-                        <p className="text-muted-foreground">Selamat datang, {user.name || user.email}. Kelola praktikum dan materi lab Anda.</p>
+                        <p className="text-muted-foreground">Selamat datang, {user.name || user.email}. Kelola kelas praktikum Anda.</p>
                     </div>
                     <div className="flex gap-2">
-                        <Link href="/admin/labs">
-                            <Button variant="outline">
-                                <BookOpen className="mr-2 h-4 w-4" /> Kelola Semua Lab ({totalSystemLabs})
-                            </Button>
-                        </Link>
                         <Link href="/admin/labs/create">
                             <Button>
                                 <Plus className="mr-2 h-4 w-4" /> Buat Lab Baru
@@ -122,7 +85,7 @@ export default async function AdminDashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{myLabsVal}</div>
-                            <p className="text-xs text-muted-foreground">Dari total {totalSystemLabs} lab di kampus</p>
+                            <p className="text-xs text-muted-foreground">Lab aktif yang Anda ampu</p>
                         </CardContent>
                     </Card>
                     <Card>
@@ -147,15 +110,13 @@ export default async function AdminDashboardPage() {
                     </Card>
                 </div>
 
-                {/* Recent Labs */}
+                {/* My Recent Labs */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle>{isShowingAllCampusLabs ? "Daftar Laboratorium Kampus" : "Kelas / Lab Saya"}</CardTitle>
+                            <CardTitle>Kelas / Lab Saya</CardTitle>
                             <CardDescription>
-                                {isShowingAllCampusLabs
-                                    ? "Berikut laboratorium yang ada di sistem kampus. Anda dapat mengedit materi atau membuat lab baru."
-                                    : "Daftar laboratorium praktikum yang Anda kelola."}
+                                Daftar laboratorium praktikum yang Anda kelola.
                             </CardDescription>
                         </div>
                         <Link href="/admin/labs">
@@ -164,10 +125,21 @@ export default async function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {displayLabs.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-6">Belum ada laboratorium yang dibuat.</p>
+                            {myLabs.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground bg-gray-50/50 dark:bg-zinc-900/50 rounded-lg border border-dashed">
+                                    <FlaskConical className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                                    <p className="text-sm font-medium text-foreground">Anda belum memiliki kelas / laboratorium.</p>
+                                    <p className="text-xs text-muted-foreground mt-1 mb-4">
+                                        Klik tombol di bawah untuk mulai membuat modul praktikum pertama Anda.
+                                    </p>
+                                    <Link href="/admin/labs/create">
+                                        <Button size="sm">
+                                            <Plus className="mr-2 h-4 w-4" /> Buat Lab Baru
+                                        </Button>
+                                    </Link>
+                                </div>
                             ) : (
-                                displayLabs.map((lab: any) => (
+                                myLabs.map((lab: any) => (
                                     <div key={lab.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                                         <div className="flex items-center gap-4">
                                             <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-xl">
@@ -176,7 +148,7 @@ export default async function AdminDashboardPage() {
                                             <div>
                                                 <p className="font-semibold text-sm">{lab.title}</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {lab.department?.name || "Independen"} • {lab._count.modules} Modul • Dosen: <b>{lab.instructor || "Umum"}</b>
+                                                    {lab.department?.name || "Independen"} • {lab._count.modules} Modul
                                                 </p>
                                             </div>
                                         </div>
@@ -195,7 +167,7 @@ export default async function AdminDashboardPage() {
         );
     }
 
-    // --- ADMIN VIEW (Default) ---
+    // --- ADMIN VIEW (Superadmin sees all) ---
     const userCount = await prisma.user.count();
     const labCount = await prisma.lab.count();
     const departmentCount = await prisma.department.count();
@@ -216,12 +188,12 @@ export default async function AdminDashboardPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
-                    <p className="text-muted-foreground">Monitor statistik platform dan kelola laboratorium virtual.</p>
+                    <p className="text-muted-foreground">Monitor platform statistics and manage all virtual labs.</p>
                 </div>
                 <div className="flex gap-2">
                     <Link href="/admin/labs">
                         <Button variant="outline">
-                            <BookOpen className="mr-2 h-4 w-4" /> Kelola Lab ({labCount})
+                            Kelola Semua Lab ({labCount})
                         </Button>
                     </Link>
                     <Link href="/admin/labs/create">
@@ -270,8 +242,8 @@ export default async function AdminDashboardPage() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle>Laboratorium Terbaru</CardTitle>
-                        <CardDescription>Daftar lab yang baru saja ditambahkan atau diperbarui.</CardDescription>
+                        <CardTitle>Laboratorium Terbaru (Semua Dosen)</CardTitle>
+                        <CardDescription>Daftar seluruh lab kampus yang baru saja ditambahkan.</CardDescription>
                     </div>
                     <Link href="/admin/labs">
                         <Button variant="ghost" size="sm">Lihat Semua →</Button>
@@ -296,7 +268,7 @@ export default async function AdminDashboardPage() {
                                         </div>
                                     </div>
                                     <Link href={`/admin/labs/${lab.id}/modules`}>
-                                        <Button variant="outline" size="sm">Kelola Materi</Button>
+                                        <Button variant="outline" size="sm">Manage Modules</Button>
                                     </Link>
                                 </div>
                             ))
