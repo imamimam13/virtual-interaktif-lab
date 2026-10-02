@@ -8,33 +8,55 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { Loader2, Save, ArrowLeft, RefreshCw, Type, Image as ImageIcon, Move } from "lucide-react";
+import { Loader2, Save, ArrowLeft, RefreshCw, Type, Image as ImageIcon, Move, Upload, Sparkles, Trash2, Stamp, PenTool } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useState, useEffect, useRef } from "react";
 import { createTemplate, updateTemplate } from "@/lib/certificate-actions";
+import { uploadCertificateAsset } from "@/lib/upload-actions";
 import { useRouter } from "next/navigation";
 
 // Types
-type ElementType = 'name' | 'lab' | 'code' | 'date' | 'instructor' | 'text';
-interface VisualElement {
+export type ElementType = 'name' | 'lab' | 'code' | 'date' | 'instructor' | 'text' | 'image';
+
+export interface VisualElement {
     id: string;
     type: ElementType;
     label: string;
     x: number;
     y: number;
-    fontSize: number;
-    color: string;
-    fontWeight: string;
-    textAlign: 'left' | 'center' | 'right';
+    fontSize?: number;
+    color?: string;
+    fontWeight?: string;
+    textAlign?: 'left' | 'center' | 'right';
     text?: string; // For static text
+    imageUrl?: string; // For logo, stamp, signature, illustration
+    width?: number; // In px
+    height?: number; // In px
+    opacity?: number; // 0.1 to 1.0
 }
 
+const PRESET_BACKGROUNDS = [
+    {
+        name: "Classic Navy & Gold",
+        url: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1123" height="794" viewBox="0 0 1123 794"><rect width="1123" height="794" fill="%23fdfbf7"/><rect x="25" y="25" width="1073" height="744" fill="none" stroke="%231e3a8a" stroke-width="4"/><rect x="35" y="35" width="1053" height="724" fill="none" stroke="%23d97706" stroke-width="2"/><g fill="%23d97706"><polygon points="25,25 65,25 25,65"/><polygon points="1098,25 1058,25 1098,65"/><polygon points="25,769 65,769 25,729"/><polygon points="1098,769 1058,769 1098,729"/></g><circle cx="561.5" cy="397" r="180" fill="%231e3a8a" opacity="0.02"/></svg>`
+    },
+    {
+        name: "Academic Emerald",
+        url: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1123" height="794" viewBox="0 0 1123 794"><rect width="1123" height="794" fill="%23fcfdfc"/><rect x="25" y="25" width="1073" height="744" fill="none" stroke="%23065f46" stroke-width="5"/><rect x="35" y="35" width="1053" height="724" fill="none" stroke="%2310b981" stroke-width="1.5"/><g fill="%23065f46"><circle cx="45" cy="45" r="8"/><circle cx="1078" cy="45" r="8"/><circle cx="45" cy="749" r="8"/><circle cx="1078" cy="749" r="8"/></g></svg>`
+    },
+    {
+        name: "Royal Crimson & Gold",
+        url: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1123" height="794" viewBox="0 0 1123 794"><rect width="1123" height="794" fill="%23fffefa"/><rect x="30" y="30" width="1063" height="734" fill="none" stroke="%23991b1b" stroke-width="4"/><rect x="40" y="40" width="1043" height="714" fill="none" stroke="%23eab308" stroke-width="2"/><g fill="%23eab308"><polygon points="30,30 70,30 30,70"/><polygon points="1093,30 1053,30 1093,70"/><polygon points="30,764 70,764 30,724"/><polygon points="1093,764 1053,764 1093,724"/></g></svg>`
+    }
+];
+
 const INITIAL_ELEMENTS: VisualElement[] = [
-    { id: '1', type: 'name', label: 'Nama Mahasiswa', x: 50, y: 40, fontSize: 32, color: '#000000', fontWeight: 'bold', textAlign: 'center' },
-    { id: '2', type: 'lab', label: 'Nama Lab', x: 50, y: 50, fontSize: 24, color: '#333333', fontWeight: 'normal', textAlign: 'center' },
-    { id: '3', type: 'code', label: 'Nomor Sertifikat', x: 50, y: 60, fontSize: 14, color: '#666666', fontWeight: 'normal', textAlign: 'center' },
-    { id: '4', type: 'instructor', label: 'Instruktur', x: 25, y: 80, fontSize: 16, color: '#000000', fontWeight: 'bold', textAlign: 'center' },
-    { id: '5', type: 'text', text: 'Ketua LPPM', label: 'LPPM', x: 75, y: 80, fontSize: 16, color: '#000000', fontWeight: 'bold', textAlign: 'center' },
+    { id: '1', type: 'name', label: 'Nama Mahasiswa', x: 50, y: 45, fontSize: 34, color: '#0f172a', fontWeight: 'bold', textAlign: 'center' },
+    { id: '2', type: 'lab', label: 'Nama Lab', x: 50, y: 58, fontSize: 24, color: '#1e3a8a', fontWeight: 'bold', textAlign: 'center' },
+    { id: '3', type: 'code', label: 'Nomor Sertifikat', x: 50, y: 28, fontSize: 13, color: '#64748b', fontWeight: 'normal', textAlign: 'center' },
+    { id: '4', type: 'date', label: 'Tanggal', x: 50, y: 68, fontSize: 14, color: '#475569', fontWeight: 'normal', textAlign: 'center' },
+    { id: '5', type: 'instructor', label: 'Instruktur', x: 25, y: 84, fontSize: 15, color: '#0f172a', fontWeight: 'bold', textAlign: 'center' },
+    { id: '6', type: 'text', text: 'Kepala LPPM', label: 'LPPM', x: 75, y: 84, fontSize: 15, color: '#0f172a', fontWeight: 'bold', textAlign: 'center' },
 ];
 
 const MOCK_DATA = {
@@ -61,11 +83,19 @@ export default function TemplateEditor({ template }: { template?: any }) {
     const [css, setCss] = useState(template?.css || "");
 
     // Visual Editor State
-    const [backgroundUrl, setBackgroundUrl] = useState(template?.backgroundUrl || "");
+    const [backgroundUrl, setBackgroundUrl] = useState(template?.backgroundUrl || PRESET_BACKGROUNDS[0].url);
     const [elements, setElements] = useState<VisualElement[]>(
         template?.elements ? JSON.parse(template.elements) : INITIAL_ELEMENTS
     );
     const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+
+    // Uploading status
+    const [isUploadingBg, setIsUploadingBg] = useState(false);
+    const [isUploadingElement, setIsUploadingElement] = useState(false);
+
+    // Refs
+    const bgFileInputRef = useRef<HTMLInputElement>(null);
+    const elFileInputRef = useRef<HTMLInputElement>(null);
 
     // Preview
     const [previewHtml, setPreviewHtml] = useState("");
@@ -99,7 +129,11 @@ export default function TemplateEditor({ template }: { template?: any }) {
 
         setElements(prev => prev.map(el => {
             if (el.id === selectedElementId) {
-                return { ...el, x: el.x + dx, y: el.y + dy };
+                return { 
+                    ...el, 
+                    x: Math.max(0, Math.min(100, Math.round((el.x + dx) * 10) / 10)), 
+                    y: Math.max(0, Math.min(100, Math.round((el.y + dy) * 10) / 10)) 
+                };
             }
             return el;
         }));
@@ -111,18 +145,33 @@ export default function TemplateEditor({ template }: { template?: any }) {
         isDragging.current = false;
     };
 
-    const addElement = (type: ElementType) => {
+    const addElement = (type: ElementType, customLabel?: string) => {
         const newEl: VisualElement = {
             id: Math.random().toString(36).substr(2, 9),
             type,
-            label: type === 'text' ? 'Teks Baru' : type.toUpperCase(),
-            text: type === 'text' ? 'Static Text' : undefined,
+            label: customLabel || (type === 'text' ? 'Teks Baru' : type.toUpperCase()),
+            text: type === 'text' ? 'Teks Tambahan' : undefined,
             x: 50,
             y: 50,
             fontSize: 18,
             color: '#000000',
             fontWeight: 'normal',
             textAlign: 'center'
+        };
+        setElements([...elements, newEl]);
+        setSelectedElementId(newEl.id);
+    };
+
+    const addImageElement = (label: string = "Logo Kampus", defaultUrl: string = "") => {
+        const newEl: VisualElement = {
+            id: Math.random().toString(36).substr(2, 9),
+            type: 'image',
+            label,
+            imageUrl: defaultUrl,
+            x: 50,
+            y: 20,
+            width: 100,
+            opacity: 1
         };
         setElements([...elements, newEl]);
         setSelectedElementId(newEl.id);
@@ -137,6 +186,50 @@ export default function TemplateEditor({ template }: { template?: any }) {
         setSelectedElementId(null);
     };
 
+    // Background Image Upload Handler
+    const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploadingBg(true);
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+            const res = await uploadCertificateAsset(formData);
+            if (res.success && res.url) {
+                setBackgroundUrl(res.url);
+            } else {
+                alert(res.message || "Gagal mengunggah background");
+            }
+        } catch (err) {
+            alert("Terjadi kesalahan saat mengunggah background");
+        } finally {
+            setIsUploadingBg(false);
+        }
+    };
+
+    // Element Image Upload Handler
+    const handleElementImgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedElementId) return;
+
+        setIsUploadingElement(true);
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+            const res = await uploadCertificateAsset(formData);
+            if (res.success && res.url) {
+                updateSelectedElement("imageUrl", res.url);
+            } else {
+                alert(res.message || "Gagal mengunggah gambar");
+            }
+        } catch (err) {
+            alert("Terjadi kesalahan saat mengunggah gambar");
+        } finally {
+            setIsUploadingElement(false);
+        }
+    };
+
     // Auto-Generate HTML/CSS from Visual State
     useEffect(() => {
         if (mode === 'visual') {
@@ -148,29 +241,46 @@ export default function TemplateEditor({ template }: { template?: any }) {
                     background-image: url('${backgroundUrl}');
                     background-size: cover;
                     background-position: center;
+                    background-repeat: no-repeat;
                     overflow: hidden;
-                    font-family: sans-serif;
+                    font-family: 'Times New Roman', Times, Georgia, serif;
                 }
                 .cert-element { position: absolute; transform: translate(-50%, -50%); width: 100%; }
             `;
 
             const generatedHtml = `
                 <div class="cert-container">
-                    ${elements.map(el => `
-                        <div style="
-                            left: ${el.x}%; 
-                            top: ${el.y}%; 
-                            font-size: ${el.fontSize}px; 
-                            color: ${el.color}; 
-                            font-weight: ${el.fontWeight}; 
-                            text-align: ${el.textAlign};
-                            position: absolute;
-                            transform: translate(-50%, -50%);
-                            width: 100%;
-                        ">
-                            ${el.type === 'text' ? el.text : `{{${el.type}}}`}
-                        </div>
-                    `).join('')}
+                    ${elements.map(el => {
+                        if (el.type === 'image') {
+                            return `
+                                <div style="
+                                    left: ${el.x}%; 
+                                    top: ${el.y}%; 
+                                    position: absolute; 
+                                    transform: translate(-50%, -50%);
+                                    z-index: 5;
+                                ">
+                                    ${el.imageUrl ? `<img src="${el.imageUrl}" style="width: ${el.width || 100}px; opacity: ${el.opacity ?? 1}; display: block;" />` : `<div style="width: ${el.width || 100}px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666;">Placeholder Gambar</div>`}
+                                </div>
+                            `;
+                        }
+                        return `
+                            <div style="
+                                left: ${el.x}%; 
+                                top: ${el.y}%; 
+                                font-size: ${el.fontSize || 16}px; 
+                                color: ${el.color || '#000000'}; 
+                                font-weight: ${el.fontWeight || 'normal'}; 
+                                text-align: ${el.textAlign || 'center'};
+                                position: absolute;
+                                transform: translate(-50%, -50%);
+                                width: 100%;
+                                z-index: 10;
+                            ">
+                                ${el.type === 'text' ? el.text : `{{${el.type}}}`}
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             `;
 
@@ -201,6 +311,7 @@ export default function TemplateEditor({ template }: { template?: any }) {
         if (state.message.includes("success")) router.push("/admin/certificate-templates");
     }, [state, router]);
 
+    const selectedEl = elements.find(el => el.id === selectedElementId);
 
     return (
         <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
@@ -210,125 +321,280 @@ export default function TemplateEditor({ template }: { template?: any }) {
                     <Link href="/admin/certificate-templates">
                         <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
                     </Link>
-                    <h1 className="text-2xl font-bold">{isEdit ? "Edit Template" : "Buat Template Baru"}</h1>
+                    <div>
+                        <h1 className="text-2xl font-bold">{isEdit ? "Edit Template Sertifikat" : "Buat Template Sertifikat Baru"}</h1>
+                        <p className="text-xs text-muted-foreground">Rancang sertifikat dengan background dan logo kampus kustom</p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-4">
                     <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="w-[200px]">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="visual">Visual</TabsTrigger>
-                            <TabsTrigger value="code">Code</TabsTrigger>
+                            <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+                            <TabsTrigger value="code">Code HTML/CSS</TabsTrigger>
                         </TabsList>
                     </Tabs>
                     <Button onClick={() => document.getElementById('submit-btn')?.click()} disabled={isPending}>
                         {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Simpan
+                        Simpan Template
                     </Button>
                 </div>
             </div>
 
             <div className="flex gap-6 h-full overflow-hidden">
                 {/* LEFT SIDEBAR (Controls) */}
-                <div className="w-80 flex flex-col gap-4 overflow-y-auto pb-10">
+                <div className="w-84 flex flex-col gap-4 overflow-y-auto pb-10">
                     <Card>
-                        <CardHeader><CardTitle>Informasi Dasar</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Nama Template</Label>
-                                <Input value={name} onChange={e => setName(e.target.value)} placeholder="Template Name" />
+                        <CardHeader className="pb-3"><CardTitle className="text-sm">Informasi Dasar</CardTitle></CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Nama Template</Label>
+                                <Input value={name} onChange={e => setName(e.target.value)} placeholder="Contoh: Sertifikat Resmi UWB Gold" />
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 pt-1">
                                 <Checkbox checked={isDefault} onCheckedChange={(c) => setIsDefault(!!c)} />
-                                <Label>Default Template</Label>
+                                <Label className="text-xs">Jadikan Template Default Sistem</Label>
                             </div>
                         </CardContent>
                     </Card>
 
                     {mode === 'visual' ? (
                         <>
+                            {/* Background Image & Presets */}
                             <Card>
-                                <CardHeader><CardTitle>Global Settings</CardTitle></CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label>Background Image URL</Label>
-                                        <div className="flex gap-2">
-                                            <Input value={backgroundUrl} onChange={e => setBackgroundUrl(e.target.value)} placeholder="https://..." />
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">Gunakan gambar A4 Landscape (1123x794px)</p>
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-sm flex items-center justify-between">
+                                        <span>Background Sertifikat</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {/* Upload Button */}
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="file"
+                                            ref={bgFileInputRef}
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleBgUpload}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full text-xs"
+                                            disabled={isUploadingBg}
+                                            onClick={() => bgFileInputRef.current?.click()}
+                                        >
+                                            {isUploadingBg ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-2 h-3.5 w-3.5" />}
+                                            Upload Gambar Background
+                                        </Button>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => addElement('name')}><Type className="mr-2 h-3 w-3" />+ Nama</Button>
-                                        <Button variant="outline" size="sm" onClick={() => addElement('lab')}><Type className="mr-2 h-3 w-3" />+ Lab</Button>
-                                        <Button variant="outline" size="sm" onClick={() => addElement('code')}><Type className="mr-2 h-3 w-3" />+ Kode</Button>
-                                        <Button variant="outline" size="sm" onClick={() => addElement('date')}><Type className="mr-2 h-3 w-3" />+ Tanggal</Button>
-                                        <Button variant="outline" size="sm" onClick={() => addElement('instructor')}><Type className="mr-2 h-3 w-3" />+ Instruktur</Button>
-                                        <Button variant="outline" size="sm" onClick={() => addElement('text')}><Type className="mr-2 h-3 w-3" />+ Text Static</Button>
+
+                                    {/* Preset Backgrounds */}
+                                    <div className="space-y-1.5 pt-1">
+                                        <Label className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                            <Sparkles className="h-3 w-3 text-amber-500" /> Atau Pilih Preset Resmi:
+                                        </Label>
+                                        <div className="grid grid-cols-1 gap-1.5">
+                                            {PRESET_BACKGROUNDS.map((bg, idx) => (
+                                                <Button
+                                                    key={idx}
+                                                    type="button"
+                                                    variant={backgroundUrl === bg.url ? "default" : "secondary"}
+                                                    size="sm"
+                                                    className="justify-start text-xs h-7 px-2"
+                                                    onClick={() => setBackgroundUrl(bg.url)}
+                                                >
+                                                    {bg.name}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1 pt-1">
+                                        <Label className="text-[11px] text-muted-foreground">Atau masukkan URL Background:</Label>
+                                        <Input
+                                            value={backgroundUrl}
+                                            onChange={e => setBackgroundUrl(e.target.value)}
+                                            placeholder="https://..."
+                                            className="text-xs h-7"
+                                        />
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            {selectedElementId && (
-                                <Card>
-                                    <CardHeader className="flex flex-row items-center justify-between">
-                                        <CardTitle>Element Properties</CardTitle>
-                                        <Button variant="ghost" size="sm" className="text-red-500 h-6" onClick={deleteSelectedElement}>Delete</Button>
+                            {/* Add Elements Toolbox */}
+                            <Card>
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-sm">Tambah Elemen Sertifikat</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-2">
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                        <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => addElement('name')}><Type className="mr-1.5 h-3 w-3" />+ Nama</Button>
+                                        <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => addElement('lab')}><Type className="mr-1.5 h-3 w-3" />+ Nama Lab</Button>
+                                        <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => addElement('code')}><Type className="mr-1.5 h-3 w-3" />+ Nomor Sertifikat</Button>
+                                        <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => addElement('date')}><Type className="mr-1.5 h-3 w-3" />+ Tanggal</Button>
+                                        <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => addElement('instructor')}><Type className="mr-1.5 h-3 w-3" />+ Instruktur</Button>
+                                        <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => addElement('text')}><Type className="mr-1.5 h-3 w-3" />+ Teks Custom</Button>
+                                    </div>
+
+                                    <div className="pt-2 border-t space-y-1.5">
+                                        <Label className="text-[11px] font-semibold text-muted-foreground">Logo & Tanda Tangan:</Label>
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                            <Button variant="secondary" size="sm" className="text-xs h-8" onClick={() => addImageElement('Logo Kampus')}>
+                                                <ImageIcon className="mr-1.5 h-3 w-3 text-blue-600" /> + Logo Kampus
+                                            </Button>
+                                            <Button variant="secondary" size="sm" className="text-xs h-8" onClick={() => addImageElement('Stempel LPPM')}>
+                                                <Stamp className="mr-1.5 h-3 w-3 text-amber-600" /> + Stempel
+                                            </Button>
+                                            <Button variant="secondary" size="sm" className="text-xs h-8 col-span-2" onClick={() => addImageElement('Tanda Tangan Dosen')}>
+                                                <PenTool className="mr-1.5 h-3 w-3 text-indigo-600" /> + Tanda Tangan Digital
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Selected Element Properties */}
+                            {selectedEl && (
+                                <Card className="border-blue-300 dark:border-blue-900 shadow-md">
+                                    <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-sm font-semibold">Pengaturan Elemen</CardTitle>
+                                            <p className="text-[11px] text-muted-foreground">{selectedEl.label}</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="text-red-500 h-7 px-2 hover:bg-red-50 dark:hover:bg-red-950" onClick={deleteSelectedElement}>
+                                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
+                                        </Button>
                                     </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        {elements.find(el => el.id === selectedElementId)?.type === 'text' && (
-                                            <div className="space-y-2">
-                                                <Label>Text Content</Label>
-                                                <Input
-                                                    value={elements.find(el => el.id === selectedElementId)?.text}
-                                                    onChange={e => updateSelectedElement('text', e.target.value)}
-                                                />
+                                    <CardContent className="space-y-3.5">
+                                        {/* Image Properties */}
+                                        {selectedEl.type === 'image' ? (
+                                            <div className="space-y-3">
+                                                <div className="space-y-1.5">
+                                                    <Label className="text-xs">Gambar / Logo</Label>
+                                                    <input
+                                                        type="file"
+                                                        ref={elFileInputRef}
+                                                        className="hidden"
+                                                        accept="image/*"
+                                                        onChange={handleElementImgUpload}
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="w-full text-xs"
+                                                        disabled={isUploadingElement}
+                                                        onClick={() => elFileInputRef.current?.click()}
+                                                    >
+                                                        {isUploadingElement ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-2 h-3.5 w-3.5" />}
+                                                        Upload Gambar / Logo
+                                                    </Button>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-[11px] text-muted-foreground">Atau masukkan URL Gambar:</Label>
+                                                    <Input
+                                                        value={selectedEl.imageUrl || ""}
+                                                        onChange={e => updateSelectedElement('imageUrl', e.target.value)}
+                                                        placeholder="https://.../logo.png"
+                                                        className="text-xs h-7"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <div className="flex justify-between text-xs">
+                                                        <Label className="text-xs">Ukuran Lebar: {selectedEl.width || 100}px</Label>
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        min="30" max="400" step="5"
+                                                        value={selectedEl.width || 100}
+                                                        onChange={(e) => updateSelectedElement('width', parseInt(e.target.value))}
+                                                        className="w-full"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <div className="flex justify-between text-xs">
+                                                        <Label className="text-xs">Transparansi: {Math.round((selectedEl.opacity ?? 1) * 100)}%</Label>
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        min="0.1" max="1" step="0.05"
+                                                        value={selectedEl.opacity ?? 1}
+                                                        onChange={(e) => updateSelectedElement('opacity', parseFloat(e.target.value))}
+                                                        className="w-full"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            /* Text Properties */
+                                            <div className="space-y-3">
+                                                {selectedEl.type === 'text' && (
+                                                    <div className="space-y-1.5">
+                                                        <Label className="text-xs">Isi Teks</Label>
+                                                        <Input
+                                                            value={selectedEl.text || ""}
+                                                            onChange={e => updateSelectedElement('text', e.target.value)}
+                                                            className="text-xs"
+                                                        />
+                                                    </div>
+                                                )}
+                                                <div className="space-y-1.5">
+                                                    <div className="flex justify-between text-xs">
+                                                        <Label className="text-xs">Ukuran Font: {selectedEl.fontSize}px</Label>
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        min="10" max="72" step="1"
+                                                        value={selectedEl.fontSize || 16}
+                                                        onChange={(e) => updateSelectedElement('fontSize', parseInt(e.target.value))}
+                                                        className="w-full"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Warna</Label>
+                                                        <Input
+                                                            type="color"
+                                                            value={selectedEl.color || "#000000"}
+                                                            onChange={e => updateSelectedElement('color', e.target.value)}
+                                                            className="h-7 p-0.5 cursor-pointer"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-xs">Ketebalan</Label>
+                                                        <select
+                                                            className="w-full border rounded h-7 text-xs px-1 bg-background"
+                                                            value={selectedEl.fontWeight || "normal"}
+                                                            onChange={e => updateSelectedElement('fontWeight', e.target.value)}
+                                                        >
+                                                            <option value="normal">Normal</option>
+                                                            <option value="bold">Bold (Tebal)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-xs">Perataan (Align)</Label>
+                                                    <div className="flex border rounded overflow-hidden">
+                                                        {['left', 'center', 'right'].map((align) => (
+                                                            <button
+                                                                key={align}
+                                                                type="button"
+                                                                className={`flex-1 py-1 text-xs ${selectedEl.textAlign === align ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-muted'}`}
+                                                                onClick={() => updateSelectedElement('textAlign', align)}
+                                                            >
+                                                                {align.charAt(0).toUpperCase() + align.slice(1)}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
-                                        <div className="space-y-2">
-                                            <Label>Font Size: {elements.find(el => el.id === selectedElementId)?.fontSize}px</Label>
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="range"
-                                                    min="8" max="72" step="1"
-                                                    value={elements.find(el => el.id === selectedElementId)?.fontSize || 16}
-                                                    onChange={(e) => updateSelectedElement('fontSize', parseInt(e.target.value))}
-                                                    className="w-full"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className="space-y-2">
-                                                <Label>Color</Label>
-                                                <Input
-                                                    type="color"
-                                                    value={elements.find(el => el.id === selectedElementId)?.color}
-                                                    onChange={e => updateSelectedElement('color', e.target.value)}
-                                                    className="h-8"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label>Weight</Label>
-                                                <select
-                                                    className="w-full border rounded p-1 text-sm bg-background"
-                                                    value={elements.find(el => el.id === selectedElementId)?.fontWeight}
-                                                    onChange={e => updateSelectedElement('fontWeight', e.target.value)}
-                                                >
-                                                    <option value="normal">Normal</option>
-                                                    <option value="bold">Bold</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Alignment</Label>
-                                            <div className="flex border rounded overflow-hidden">
-                                                {['left', 'center', 'right'].map((align) => (
-                                                    <button
-                                                        key={align}
-                                                        className={`flex-1 py-1 text-xs ${elements.find(el => el.id === selectedElementId)?.textAlign === align ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
-                                                        onClick={() => updateSelectedElement('textAlign', align)}
-                                                    >
-                                                        {align.charAt(0).toUpperCase() + align.slice(1)}
-                                                    </button>
-                                                ))}
-                                            </div>
+
+                                        {/* Coordinates info */}
+                                        <div className="pt-2 border-t flex justify-between text-[11px] text-muted-foreground">
+                                            <span>Posisi X: <strong>{selectedEl.x}%</strong></span>
+                                            <span>Posisi Y: <strong>{selectedEl.y}%</strong></span>
+                                            <span className="text-blue-500 font-medium">Tarik untuk geser</span>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -336,16 +602,16 @@ export default function TemplateEditor({ template }: { template?: any }) {
                         </>
                     ) : (
                         <Card>
-                            <CardHeader><CardTitle>Code Editors</CardTitle></CardHeader>
+                            <CardHeader><CardTitle className="text-sm">Code Editors</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
-                                <p className="text-xs text-muted-foreground">Manual HTML/CSS override. Switching back to visual mode will overwrite changes here unless you are careful.</p>
+                                <p className="text-xs text-muted-foreground">Kustomisasi manual kode HTML & CSS untuk sertifikat tingkat lanjut.</p>
                                 <div className="space-y-2">
-                                    <Label>HTML</Label>
-                                    <Textarea value={html} onChange={e => setHtml(e.target.value)} className="font-mono text-xs h-[150px]" />
+                                    <Label className="text-xs font-mono">HTML</Label>
+                                    <Textarea value={html} onChange={e => setHtml(e.target.value)} className="font-mono text-xs h-[180px]" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>CSS</Label>
-                                    <Textarea value={css} onChange={e => setCss(e.target.value)} className="font-mono text-xs h-[150px]" />
+                                    <Label className="text-xs font-mono">CSS</Label>
+                                    <Textarea value={css} onChange={e => setCss(e.target.value)} className="font-mono text-xs h-[180px]" />
                                 </div>
                             </CardContent>
                         </Card>
@@ -353,48 +619,97 @@ export default function TemplateEditor({ template }: { template?: any }) {
                 </div>
 
                 {/* MAIN AREA (Canvas / Preview) */}
-                <div className="flex-1 bg-gray-100 p-8 overflow-auto flex items-center justify-center">
+                <div className="flex-1 bg-slate-900/10 dark:bg-slate-950 p-6 overflow-auto flex items-start justify-center rounded-xl border">
                     {mode === 'visual' ? (
                         <div
-                            className="bg-white shadow-2xl relative overflow-hidden select-none"
+                            className="bg-white shadow-2xl relative overflow-hidden select-none transition-all rounded-sm"
                             style={{
                                 width: '1123px',
                                 height: '794px',
-                                transform: 'scale(0.8)',
+                                minWidth: '1123px',
+                                minHeight: '794px',
+                                transform: 'scale(0.75)',
                                 transformOrigin: 'top center',
                                 backgroundImage: `url('${backgroundUrl}')`,
                                 backgroundSize: 'cover',
-                                backgroundPosition: 'center'
+                                backgroundPosition: 'center',
+                                backgroundRepeat: 'no-repeat'
                             }}
                             ref={canvasRef}
                             onMouseMove={handleMouseMove}
                             onMouseUp={handleMouseUp}
                             onMouseLeave={handleMouseUp}
                         >
-                            {!backgroundUrl && <div className="absolute inset-0 flex items-center justify-center text-gray-300 pointer-events-none">No Background Image</div>}
-
-                            {elements.map(el => (
-                                <div
-                                    key={el.id}
-                                    onMouseDown={(e) => handleMouseDown(e, el.id)}
-                                    className={`absolute cursor-move border-2 ${selectedElementId === el.id ? 'border-blue-500 bg-blue-50/20' : 'border-transparent hover:border-gray-300'}`}
-                                    style={{
-                                        left: `${el.x}%`,
-                                        top: `${el.y}%`,
-                                        transform: 'translate(-50%, -50%)',
-                                        width: '100%',
-                                        textAlign: el.textAlign,
-                                        fontSize: `${el.fontSize}px`,
-                                        color: el.color,
-                                        fontWeight: el.fontWeight,
-                                    }}
-                                >
-                                    {el.type === 'text' ? el.text : MOCK_DATA[el.type as keyof typeof MOCK_DATA]}
+                            {!backgroundUrl && (
+                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none">
+                                    Belum ada Background Image
                                 </div>
-                            ))}
+                            )}
+
+                            {elements.map(el => {
+                                const isSelected = selectedElementId === el.id;
+                                if (el.type === 'image') {
+                                    return (
+                                        <div
+                                            key={el.id}
+                                            onMouseDown={(e) => handleMouseDown(e, el.id)}
+                                            className={`absolute cursor-move border-2 rounded p-1 transition-all ${isSelected ? 'border-blue-500 bg-blue-50/40 shadow-xl ring-2 ring-blue-400' : 'border-dashed border-gray-400/50 hover:border-gray-600'}`}
+                                            style={{
+                                                left: `${el.x}%`,
+                                                top: `${el.y}%`,
+                                                transform: 'translate(-50%, -50%)',
+                                                zIndex: isSelected ? 40 : 15,
+                                            }}
+                                        >
+                                            {el.imageUrl ? (
+                                                <img
+                                                    src={el.imageUrl}
+                                                    alt={el.label}
+                                                    style={{
+                                                        width: `${el.width || 100}px`,
+                                                        opacity: el.opacity ?? 1,
+                                                        pointerEvents: 'none',
+                                                        display: 'block'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="bg-white/90 border flex flex-col items-center justify-center text-gray-600 p-2 text-xs rounded shadow-sm"
+                                                    style={{ width: `${el.width || 100}px`, height: '70px' }}
+                                                >
+                                                    <ImageIcon className="h-5 w-5 mb-1 text-blue-500" />
+                                                    <span className="text-[10px] font-medium">{el.label}</span>
+                                                    <span className="text-[9px] text-blue-600 font-bold">Upload</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div
+                                        key={el.id}
+                                        onMouseDown={(e) => handleMouseDown(e, el.id)}
+                                        className={`absolute cursor-move border-2 rounded px-2 py-0.5 transition-all ${isSelected ? 'border-blue-500 bg-blue-50/30 ring-2 ring-blue-400' : 'border-transparent hover:border-dashed hover:border-gray-400'}`}
+                                        style={{
+                                            left: `${el.x}%`,
+                                            top: `${el.y}%`,
+                                            transform: 'translate(-50%, -50%)',
+                                            width: '100%',
+                                            textAlign: el.textAlign,
+                                            fontSize: `${el.fontSize}px`,
+                                            color: el.color,
+                                            fontWeight: el.fontWeight,
+                                            zIndex: isSelected ? 40 : 20,
+                                        }}
+                                    >
+                                        {el.type === 'text' ? el.text : MOCK_DATA[el.type as keyof typeof MOCK_DATA]}
+                                    </div>
+                                );
+                            })}
                         </div>
                     ) : (
-                        <div className="bg-white shadow-2xl w-[1123px] h-[794px] overflow-hidden scale-[0.8] origin-top">
+                        <div className="bg-white shadow-2xl w-[1123px] h-[794px] min-w-[1123px] min-h-[794px] overflow-hidden scale-[0.75] origin-top rounded-sm">
                             <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: previewHtml }} />
                         </div>
                     )}

@@ -47,3 +47,41 @@ export async function uploadRom(formData: FormData) {
         return { success: false, message: "Failed to save file" };
     }
 }
+
+export async function uploadCertificateAsset(formData: FormData) {
+    const file = formData.get("file") as File | null;
+
+    if (!file) {
+        return { success: false, message: "No file uploaded" };
+    }
+
+    const validExtensions = [".jpg", ".jpeg", ".png", ".webp", ".svg"];
+    const fileName = file.name.toLowerCase();
+
+    const isValid = validExtensions.some(ext => fileName.endsWith(ext));
+    if (!isValid) {
+        return { success: false, message: "Format gambar tidak didukung. Gunakan JPG, PNG, WEBP, atau SVG" };
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+        return { success: false, message: "Ukuran file terlalu besar (Maksimal 10MB)" };
+    }
+
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    const uniqueName = `cert-${randomUUID()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+    const uploadDir = join(process.cwd(), "public", "uploads", "certificates");
+    await mkdir(uploadDir, { recursive: true });
+
+    const filePath = join(uploadDir, uniqueName);
+
+    try {
+        await writeFile(filePath, buffer);
+        const publicUrl = `/uploads/certificates/${uniqueName}`;
+        return { success: true, url: publicUrl, message: "Gambar berhasil diunggah" };
+    } catch (error) {
+        console.error("Upload error:", error);
+        return { success: false, message: "Gagal menyimpan gambar" };
+    }
+}
