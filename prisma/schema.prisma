@@ -17,6 +17,10 @@ model User {
   password  String // Will be hashed
   role      String   @default("STUDENT") // Role: STUDENT, ADMIN, LECTURER
   avatar    String?
+  nim       String?
+  nidn      String?
+  siakadUserId String?
+  phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -26,6 +30,10 @@ model User {
   moduleProgress ModuleProgress[]
   certificates   Certificate[]
   payouts        Payout[]
+
+  @@index([nim])
+  @@index([nidn])
+  @@index([siakadUserId])
 }
 
 model Payout {
@@ -67,6 +75,10 @@ model Lab {
   bankDetails       String? // Virtual Account / Bank Transfer Info
   isPublic          Boolean @default(false) // Public Access / Demo Lab
 
+  // SIAKAD Integration
+  siakadJadwalId    String?
+  siakadMkKode      String?
+
   departmentId String?
   department   Department?   @relation(fields: [departmentId], references: [id])
   modules      Module[]
@@ -79,6 +91,8 @@ model Lab {
   updatedAt DateTime @updatedAt
 
   enrollments Enrollment[]
+
+  @@index([siakadJadwalId])
 }
 
 model CertificateTemplate {

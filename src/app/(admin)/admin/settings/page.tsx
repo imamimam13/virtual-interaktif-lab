@@ -6,19 +6,27 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { getSystemConfig } from "@/lib/admin-actions";
 import RevenueConfigForm from "@/components/admin/revenue-config-form";
+import SiakadConfigCard from "@/components/admin/siakad-config-card";
 
 export default async function AdminSettingsPage() {
     const defaultDosenFee = await getSystemConfig("DEFAULT_DOSEN_FEE") || "50";
     const defaultLppmFee = await getSystemConfig("DEFAULT_LPPM_FEE") || "10";
+    const siakadApiKey = await getSystemConfig("SIAKAD_API_KEY") || process.env.SIAKAD_API_KEY || "siakad-vlabs-secret-key-2025";
+    const siakadSsoSecret = await getSystemConfig("SIAKAD_SSO_SECRET") || process.env.SIAKAD_SSO_SECRET || "siakad-vlabs-sso-jwt-secret-2025";
 
     return (
         <div className="space-y-6">
             <div>
                 <h1 className="text-3xl font-bold">Pengaturan Platform</h1>
-                <p className="text-muted-foreground">Konfigurasi umum aplikasi Virtual Lab.</p>
+                <p className="text-muted-foreground">Konfigurasi umum aplikasi Virtual Lab & integrasi SIAKAD.</p>
             </div>
 
             <div className="grid gap-6">
+                <SiakadConfigCard
+                    currentApiKey={siakadApiKey}
+                    currentSsoSecret={siakadSsoSecret}
+                />
+
                 <RevenueConfigForm
                     defaultDosenFee={defaultDosenFee}
                     defaultLppmFee={defaultLppmFee}
@@ -68,10 +76,6 @@ export default async function AdminSettingsPage() {
                         </div>
                     </CardContent>
                 </Card>
-
-                <div className="flex justify-end">
-                    <Button>Simpan Perubahan</Button>
-                </div>
             </div>
         </div>
     );
