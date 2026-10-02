@@ -69,6 +69,10 @@ RUN npm install bcryptjs prisma && \
 RUN mkdir -p public/uploads && chown -R nextjs:nodejs public/uploads
 
 
+# Copy entrypoint script
+COPY --from=builder --chown=nextjs:nodejs /app/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 USER nextjs
 
 EXPOSE 3000
@@ -77,6 +81,4 @@ ENV PORT=3000
 # set hostname to localhost
 ENV HOSTNAME="0.0.0.0"
 
-# CMD ["node", "server.js"]
-# We use a custom entrypoint to ensure migrations run if needed
-CMD ["node", "server.js"]
+CMD ["./entrypoint.sh"]
