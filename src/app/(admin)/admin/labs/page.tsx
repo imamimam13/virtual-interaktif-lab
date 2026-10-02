@@ -1,17 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus, FlaskConical, Pencil, Trash2, Search, PlusCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { deleteLab } from "@/lib/admin-actions";
-import DeleteLabButton from "@/components/admin/delete-lab-button";
-import ReviewLabButton from "@/components/admin/review-lab-button";
-
+import { PlusCircle } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import LabListClient from "./lab-list-client";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminLabsPage() {
     const session = await getServerSession(authOptions);
@@ -19,7 +15,6 @@ export default async function AdminLabsPage() {
 
     const isLecturer = session.user.role === "LECTURER";
 
-    // Explicitly define User where clause or empty object
     const whereClause = isLecturer
         ? { instructor: session.user.name ?? "UNKNOWN_INSTRUCTOR" }
         : {};
@@ -55,68 +50,7 @@ export default async function AdminLabsPage() {
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-4">
-                <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Cari laboratorium..." className="pl-8" />
-                </div>
-            </div>
-
-            {/* Labs Grid */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {labs.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-muted-foreground bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-dashed">
-                        <FlaskConical className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-medium">Belum ada laboratorium</h3>
-                        <p>Silakan buat laboratorium pertama anda.</p>
-                    </div>
-                ) : (
-                    labs.map((lab) => (
-                        <Card key={lab.id} className={`group hover:shadow-md transition-all relative ${lab.requestedPrice > 0 ? "border-orange-300 bg-orange-50/10" : ""}`}>
-                            <Link href={`/admin/labs/${lab.id}`} className="absolute inset-0 z-0" />
-                            <CardHeader className="pb-4 relative z-10">
-                                <div className="flex justify-between items-start gap-4">
-                                    <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center text-2xl pointer-events-none">
-                                        🧪
-                                    </div>
-                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity relative z-20">
-                                        {lab.requestedPrice > 0 && (
-                                            <ReviewLabButton lab={lab} />
-                                        )}
-                                        <Link href={`/admin/labs/${lab.id}/edit`}>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        </Link>
-                                        <DeleteLabButton id={lab.id} />
-                                    </div>
-                                </div>
-                                <CardTitle className="mt-4 line-clamp-1 pointer-events-none" title={lab.title}>{lab.title}</CardTitle>
-                                <CardDescription className="line-clamp-2 h-10 pointer-events-none">{lab.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="relative z-10 pointer-events-none">
-                                <div className="flex flex-wrap gap-2 mb-4">
-                                    {lab.department ? (
-                                        <Badge variant="outline">{lab.department.name}</Badge>
-                                    ) : (
-                                        <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200">Independen</Badge>
-                                    )}
-                                    <Badge variant="secondary">{lab._count.modules} Modul</Badge>
-                                    {lab.requestedPrice > 0 && (
-                                        <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200 animate-pulse">
-                                            Waiting Approval
-                                        </Badge>
-                                    )}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                    Dibuat: {new Date(lab.createdAt).toLocaleDateString("id-ID")}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))
-                )}
-            </div>
+            <LabListClient labs={labs} />
         </div>
     );
 }
