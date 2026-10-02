@@ -8,11 +8,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, CheckCircle2, AlertCircle, Sparkles, HelpCircle, Code2, RotateCcw } from "lucide-react";
 
 import { useFormStatus } from "react-dom";
 import { useActionState } from "react";
 import { createLab, updateLab, LabFormState } from "@/lib/admin-actions";
+
+const GRADING_PRESETS = [
+    {
+        label: "50% Kuis + 50% Simulasi",
+        json: '{\n  "QUIZ": 50,\n  "SIMULATION": 50\n}'
+    },
+    {
+        label: "10% Video + 40% Kuis + 50% Simulasi",
+        json: '{\n  "VIDEO": 10,\n  "QUIZ": 40,\n  "SIMULATION": 50\n}'
+    },
+    {
+        label: "50% Kuis + 50% Video Interaktif",
+        json: '{\n  "QUIZ": 50,\n  "INTERACTIVE_VIDEO": 50\n}'
+    },
+    {
+        label: "100% Kuis",
+        json: '{\n  "QUIZ": 100\n}'
+    }
+];
 
 type Department = {
     id: string;
@@ -80,6 +99,31 @@ export default function LabForm({
     // Choose action based on mode
     const action = isEdit ? updateLab : createLab;
     const [state, dispatch] = useActionState(action, initialState);
+
+    const [gradingInput, setGradingInput] = useState<string>(
+        state?.payload?.grading || initialData?.grading || ""
+    );
+
+    // Calculate validation & total weight
+    let parsedGrading: Record<string, any> | null = null;
+    let gradingParseError: string | null = null;
+    let totalWeight = 0;
+
+    if (gradingInput.trim()) {
+        try {
+            parsedGrading = JSON.parse(gradingInput);
+            if (typeof parsedGrading === "object" && parsedGrading !== null && !Array.isArray(parsedGrading)) {
+                totalWeight = Object.values(parsedGrading).reduce((acc: number, val: any) => {
+                    const num = Number(val);
+                    return acc + (isNaN(num) ? 0 : num);
+                }, 0);
+            } else {
+                gradingParseError = "Format harus berupa objek JSON (contoh: { \"QUIZ\": 50, \"SIMULATION\": 50 })";
+            }
+        } catch (e: any) {
+            gradingParseError = "Format JSON belum valid (cek tanda kurung {} atau koma)";
+        }
+    }
 
     const defaultInstructorValue = state?.payload?.instructor || initialData?.instructor || (isLecturer ? currentUserName : "");
 
@@ -298,21 +342,99 @@ export default function LabForm({
                             <p className="text-xs text-muted-foreground">Template yang akan digunakan untuk sertifikat kelulusan lab ini.</p>
                         </div>
 
-                        <div className="space-y-2 border-t pt-4">
-                            <Label>Konfigurasi Penilaian (Grading System)</Label>
+                        <div className="space-y-4 border-t pt-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <Label className="text-base font-semibold">Konfigurasi Penilaian (Grading System)</Label>
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                        Atur persentase bobot tiap tipe modul untuk perhitungan nilai akhir kelulusan mahasiswa (skala 0 - 100).
+                                    </p>
+                                </div>
+                                {gradingInput.trim() && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setGradingInput("")}
+                                        className="text-xs text-muted-foreground hover:text-red-500 h-7"
+                                    >
+                                        <RotateCcw className="h-3 w-3 mr-1" /> Reset / Default
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* Petunjuk & Panduan Singkat */}
+                            <div className="p-3.5 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg text-xs space-y-2.5">
+                                <div className="flex items-center gap-1.5 font-semibold text-blue-950 dark:text-blue-200">
+                                    <HelpCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                                    <span>Panduan Penentuan Bobot Nilai:</span>
+                                </div>
+                                <ul className="list-disc list-inside space-y-1 text-slate-700 dark:text-slate-300 ml-1 leading-relaxed">
+                                    <li>Kunci modul yang didukung: <code className="font-mono text-[11px] bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">QUIZ</code>, <code className="font-mono text-[11px] bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">SIMULATION</code>, <code className="font-mono text-[11px] bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">INTERACTIVE_VIDEO</code>, <code className="font-mono text-[11px] bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">VIDEO</code>, <code className="font-mono text-[11px] bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">DOCUMENT</code>.</li>
+                                    <li>Total bobot yang ideal adalah <strong>100%</strong> (misal: Quiz 40% + Simulasi 60% = 100%).</li>
+                                    <li><em>Catatan:</em> Jika kolom dikosongkan, sistem secara otomatis akan membagi nilai rata-rata sama rata ke seluruh kuis & tugas di lab ini.</li>
+                                </ul>
+
+                                {/* Template Cepat (Presets) */}
+                                <div className="pt-2 border-t border-blue-200/60 dark:border-blue-900/60 mt-2">
+                                    <div className="flex items-center gap-1.5 font-medium mb-1.5 text-blue-950 dark:text-blue-200">
+                                        <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                                        <span>Gunakan Template Cepat (1-Klik):</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {GRADING_PRESETS.map((preset, idx) => (
+                                            <Button
+                                                key={idx}
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs h-7 py-0 px-2.5 bg-white dark:bg-slate-900 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/50"
+                                                onClick={() => setGradingInput(preset.json)}
+                                            >
+                                                {preset.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* JSON Editor & Live Status */}
                             <div className="grid gap-2">
-                                <Label htmlFor="grading" className="text-xs font-normal">JSON Formatter (Bobot Penilaian)</Label>
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="grading" className="text-xs font-medium flex items-center gap-1.5">
+                                        <Code2 className="h-3.5 w-3.5" /> JSON Bobot Penilaian
+                                    </Label>
+                                    {/* Live Status Badge */}
+                                    {gradingInput.trim() ? (
+                                        gradingParseError ? (
+                                            <span className="inline-flex items-center gap-1 text-[11px] text-red-600 bg-red-50 dark:bg-red-950/40 px-2.5 py-0.5 rounded-full font-medium border border-red-200 dark:border-red-900">
+                                                <AlertCircle className="h-3 w-3" /> {gradingParseError}
+                                            </span>
+                                        ) : totalWeight === 100 ? (
+                                            <span className="inline-flex items-center gap-1 text-[11px] text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950/40 px-2.5 py-0.5 rounded-full font-semibold border border-green-200 dark:border-green-900">
+                                                <CheckCircle2 className="h-3 w-3" /> Format Valid • Total Bobot: 100%
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 rounded-full font-medium border border-amber-200 dark:border-amber-900">
+                                                <AlertCircle className="h-3 w-3" /> Format Valid • Total: {totalWeight}% (Disarankan: 100%)
+                                            </span>
+                                        )
+                                    ) : (
+                                        <span className="text-[11px] text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full border">
+                                            Default (Rata-rata otomatis)
+                                        </span>
+                                    )}
+                                </div>
+
                                 <Textarea
                                     id="grading"
                                     name="grading"
+                                    value={gradingInput}
+                                    onChange={(e) => setGradingInput(e.target.value)}
                                     className="font-mono text-xs"
                                     rows={5}
-                                    placeholder='{ "VIDEO": 10, "QUIZ": 40, "SIMULATION": 50 }'
-                                    defaultValue={state?.payload?.grading || initialData?.grading || ""}
+                                    placeholder='{\n  "QUIZ": 40,\n  "SIMULATION": 50,\n  "VIDEO": 10\n}'
                                 />
-                                <p className="text-xs text-muted-foreground">
-                                    Tentukan bobot dalam format JSON. Total bobot bisa disesuaikan.
-                                </p>
                             </div>
                         </div>
 
