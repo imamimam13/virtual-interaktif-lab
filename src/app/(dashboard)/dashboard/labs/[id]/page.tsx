@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, PlayCircle, FileText, HelpCircle, Lock, CheckCircle2, Trophy } from "lucide-react";
+import { ArrowLeft, PlayCircle, FileText, HelpCircle, Lock, CheckCircle2, Trophy, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -38,7 +38,8 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
         notFound();
     }
 
-    const isEnrolled = lab.enrollments.length > 0;
+    const isPrivileged = user.role === "ADMIN" || user.role === "LECTURER";
+    const isEnrolled = lab.enrollments.length > 0 || isPrivileged;
 
     // Fetch progress stats
     const completionStats = await prisma.moduleProgress.count({
@@ -55,6 +56,7 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
 
     const getIcon = (type: string) => {
         switch (type) {
+            case "INSTRUCTION": return <BookOpen className="h-5 w-5 text-indigo-500" />;
             case "VIDEO": return <PlayCircle className="h-5 w-5 text-blue-500" />;
             case "INTERACTIVE_VIDEO": return <PlayCircle className="h-5 w-5 text-purple-500" />;
             case "PDF": return <FileText className="h-5 w-5 text-red-500" />;
@@ -68,9 +70,18 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <Link href="/dashboard" className="text-muted-foreground hover:text-foreground flex items-center gap-2 mb-4">
-                    <ArrowLeft className="h-4 w-4" /> Kembali ke Dashboard
-                </Link>
+                <div className="flex items-center justify-between mb-4">
+                    <Link href="/dashboard" className="text-muted-foreground hover:text-foreground flex items-center gap-2">
+                        <ArrowLeft className="h-4 w-4" /> Kembali ke Dashboard
+                    </Link>
+                    {isPrivileged && (
+                        <Link href={`/admin/labs/${lab.id}/modules`}>
+                            <Button variant="outline" size="sm" className="gap-1.5 border-indigo-200 text-indigo-700 dark:text-indigo-300">
+                                ⚙️ Kelola & Edit Modul
+                            </Button>
+                        </Link>
+                    )}
+                </div>
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
@@ -79,7 +90,11 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
                             ) : (
                                 <Badge className="bg-purple-100 text-purple-700">General</Badge>
                             )}
-                            {isEnrolled ? (
+                            {isPrivileged ? (
+                                <Badge className="bg-indigo-600 text-white hover:bg-indigo-700 font-semibold">
+                                    Mode Dosen (Akses Penuh / Preview)
+                                </Badge>
+                            ) : isEnrolled ? (
                                 <Badge variant="default" className="bg-green-600">Terdaftar</Badge>
                             ) : (
                                 <Badge variant="secondary">Belum Terdaftar</Badge>
@@ -88,7 +103,7 @@ export default async function LabDetailPage({ params }: { params: Promise<{ id: 
                         <h1 className="text-3xl font-bold">{lab.title}</h1>
                         <p className="text-muted-foreground max-w-3xl">{lab.description}</p>
 
-                        {!isEnrolled && (
+                        {!isEnrolled && !isPrivileged && (
                             <div className="pt-2">
                                 <EnrollButton
                                     labId={lab.id}

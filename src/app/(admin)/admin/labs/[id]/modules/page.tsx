@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Plus, ArrowLeft, FileText, Video, HelpCircle, Trash2, Edit } from "lucide-react";
+import { Plus, ArrowLeft, FileText, Video, HelpCircle, Trash2, Edit, Eye, PlayCircle, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { deleteModule } from "@/lib/module-actions";
 import SmartPdfUploader from "@/components/admin/smart-pdf-uploader";
@@ -29,6 +29,7 @@ export default async function ModuleManagerPage({ params }: { params: Promise<{ 
 
     const getIcon = (type: string) => {
         switch (type) {
+            case "INSTRUCTION": return <BookOpen className="h-5 w-5 text-indigo-500" />;
             case "VIDEO": return <Video className="h-5 w-5 text-blue-500" />;
             case "PDF": return <FileText className="h-5 w-5 text-red-500" />;
             case "QUIZ": return <HelpCircle className="h-5 w-5 text-yellow-500" />;
@@ -86,13 +87,18 @@ export default async function ModuleManagerPage({ params }: { params: Promise<{ 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <Link href={`/dashboard/module/${module.id}`} target="_blank">
+                                        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs text-indigo-600 dark:text-indigo-400 border-indigo-200 hover:bg-indigo-50">
+                                            <Eye className="h-3.5 w-3.5" /> Preview
+                                        </Button>
+                                    </Link>
                                     <Link href={`/admin/labs/${labId}/modules/${module.id}/edit`}>
-                                        <Button variant="ghost" size="icon">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                     </Link>
                                     <form action={handleDelete.bind(null, module.id)}>
-                                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50">
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </form>

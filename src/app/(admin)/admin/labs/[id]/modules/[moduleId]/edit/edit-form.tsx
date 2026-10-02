@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Save, Code, Eye, Sparkles, HelpCircle, CheckCircle2, AlertCircle, FileText, Video, Layers, ExternalLink } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Code, Eye, Sparkles, HelpCircle, CheckCircle2, AlertCircle, FileText, Video, Layers, ExternalLink, BookOpen } from "lucide-react";
 import Link from "next/link";
+import ModulePreviewModal from "@/components/admin/module-preview-modal";
 
 interface EditModuleFormProps {
     labId: string;
@@ -27,6 +28,70 @@ function SubmitButton({ disabled }: { disabled?: boolean }) {
         </Button>
     );
 }
+
+const INSTRUCTION_TEMPLATES = [
+    {
+        name: "Panduan Langkah Kerja Praktikum Standar",
+        content: `# 📋 Petunjuk Pelaksanaan Praktikum
+
+## 🎯 Tujuan Pembelajaran
+Setelah menyelesaikan modul praktikum ini, mahasiswa diharapkan mampu:
+1. Memahami konsep dasar dan alur kerja sistem secara menyeluruh.
+2. Mengidentifikasi variabel kunci dan parameter pengukuran dalam eksperimen.
+3. Menganalisis data hasil pengujian dan menyusun kesimpulan praktikum secara mandiri.
+
+---
+
+## 🛠️ Alat, Bahan & Perangkat yang Digunakan
+- Komputer / Laptop dengan peramban (browser) modern.
+- Modul Simulasi Laboratorium Interaktif.
+- Lembar Kerja Praktikum (LKP) & Kalkulator Ilmiah.
+
+---
+
+## 📝 Langkah-Langkah Pengerjaan
+1. **Pelajari Materi Awal**: Tonton video pengantar dan baca lembar referensi yang disediakan pada modul sebelumnya.
+2. **Jalankan Simulasi**: Atur variabel input sesuai dengan tabel penugasan pada lembar praktikum.
+3. **Catat Hasil Pengamatan**: Amati perubahan nilai output dan catat pada lembar kerja Anda.
+4. **Kerjakan Evaluasi**: Jawab seluruh pertanyaan kuis checkpoint untuk menguji pemahaman Anda.
+
+> 💡 **Catatan Penting**: Pastikan Anda menekan tombol **"Saya Paham, Selesaikan Instruksi"** di bagian bawah halaman setelah selesai membaca agar progres belajar Anda tersimpan ke sistem SIAKAD.`
+    },
+    {
+        name: "Tata Tertib & SOP Laboratorium Virtual",
+        content: `# 📜 Tata Tertib & Standar Operasional Prosedur (SOP) Lab
+
+## ⚖️ Peraturan Umum
+1. **Kehadiran & Akses**: Mahasiswa wajib mengakses modul laboratorium virtual sesuai dengan jadwal perkuliahan yang telah ditentukan di SIAKAD.
+2. **Integritas Akademik**: Seluruh tugas, kuis, dan simulasi wajib dikerjakan secara mandiri. Segala bentuk kecurangan akan berakibat pembatalan nilai praktikum.
+3. **Koneksi Jaringan**: Pastikan koneksi internet stabil saat menjalankan modul simulasi dan kuis real-time.
+
+---
+
+## 🚨 Prosedur Jika Terjadi Kendala Teknis
+- Jika simulasi tidak merespons, lakukan *refresh* halaman browser (tekan \`Ctrl + F5\` atau \`Cmd + Shift + R\`).
+- Jika nilai tidak otomatis tersinkronisasi ke SIAKAD setelah menyelesaikan kuis, hubungi asisten laboratorium atau dosen pengampu dengan melampirkan tangkapan layar (*screenshot*) bukti pengerjaan.
+
+> ⚠️ **Perhatian**: Jangan menutup browser saat sedang mengerjakan kuis berwaktu (*timed quiz*) sebelum menekan tombol submit jawaban.`
+    },
+    {
+        name: "Petunjuk Pengerjaan Evaluasi & Kuis Akhir",
+        content: `# ✍️ Petunjuk Pengerjaan Kuis & Uji Kompetensi
+
+## 📌 Ketentuan Kuis
+- **Jumlah Soal**: Terdiri dari soal pilihan ganda interaktif.
+- **Waktu Pengerjaan**: Setiap pertanyaan memiliki batas waktu tertentu.
+- **Passing Grade**: Nilai kelulusan minimum adalah **70**.
+- **Bobot Nilai**: Nilai kuis ini akan otomatis dikirimkan ke modul penilaian nilai akhir semester di SIAKAD.
+
+---
+
+## 💡 Tips Pengerjaan
+- Bacalah setiap soal dan pilihan jawaban dengan teliti sebelum memilih.
+- Manfaatkan waktu yang tersedia sebaik mungkin, jangan terburu-buru.
+- Setelah selesai, periksa kembali rangkuman skor Anda di dashboard praktikum.`
+    }
+];
 
 const PRESET_GAMES = [
     { name: "Contra", system: "nes", url: "https://raw.githubusercontent.com/gregfreeman/nes-roms/master/Contra%20(U)%20%5B!%5D.nes" },
@@ -295,6 +360,9 @@ export default function EditModuleForm({ labId, module }: EditModuleFormProps) {
     const [htmlContent, setHtmlContent] = useState(module.type === "HTML" ? module.content : HTML_LAB_TEMPLATES[0].code);
     const [previewHtml, setPreviewHtml] = useState(false);
 
+    // Instruction / Panduan State
+    const [instructionContent, setInstructionContent] = useState(module.type === "INSTRUCTION" ? module.content : INSTRUCTION_TEMPLATES[0].content);
+
     // Interactive Video States
     const [videoUrl, setVideoUrl] = useState("");
     const [quizJson, setQuizJson] = useState("[]");
@@ -340,6 +408,8 @@ export default function EditModuleForm({ labId, module }: EditModuleFormProps) {
             }
         } else if (module.type === "HTML") {
             setHtmlContent(module.content);
+        } else if (module.type === "INSTRUCTION") {
+            setInstructionContent(module.content);
         } else {
             setGenericContent(module.content);
         }
@@ -398,9 +468,24 @@ export default function EditModuleForm({ labId, module }: EditModuleFormProps) {
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Detail Modul</CardTitle>
-                    <CardDescription>Ubah tipe atau konten modul praktikum ini.</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Detail Modul</CardTitle>
+                        <CardDescription>Ubah tipe atau konten modul praktikum ini.</CardDescription>
+                    </div>
+                    <ModulePreviewModal
+                        type={type}
+                        title={title}
+                        videoUrl={videoUrl}
+                        quizQuestions={parsedQuestions}
+                        standaloneQuizQuestions={standaloneParsedList}
+                        htmlContent={htmlContent}
+                        instructionContent={instructionContent}
+                        genericContent={genericContent}
+                        isEmulator={isEmulator}
+                        romUrl={romUrl}
+                        romSystem={romSystem}
+                    />
                 </CardHeader>
                 <CardContent>
                     <form action={dispatch} className="space-y-6">
@@ -425,6 +510,7 @@ export default function EditModuleForm({ labId, module }: EditModuleFormProps) {
                                     <SelectValue placeholder="Pilih tipe" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="INSTRUCTION">📖 Lembar Instruksi / Panduan Praktikum (Teks / Markdown)</SelectItem>
                                     <SelectItem value="HTML">🌐 HTML / Web Interactive Lab (HTML5, Canvas, Tulis Kode Sendiri)</SelectItem>
                                     <SelectItem value="INTERACTIVE_VIDEO">🎥 Interactive Video (Video + Kuis Pop-up Checkpoint)</SelectItem>
                                     <SelectItem value="QUIZ">📝 Kuis Interaktif (Pilihan Ganda Auto-Grading)</SelectItem>
@@ -435,6 +521,62 @@ export default function EditModuleForm({ labId, module }: EditModuleFormProps) {
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {/* ==================== 0. TIPE: INSTRUCTION ==================== */}
+                        {type === "INSTRUCTION" && (
+                            <div className="space-y-4 border p-5 rounded-xl bg-gradient-to-b from-blue-50/50 to-slate-50 dark:from-blue-950/20 dark:to-zinc-900/50 border-blue-100 dark:border-blue-900/40">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-blue-100 dark:border-blue-900/40">
+                                    <div>
+                                        <h3 className="text-sm font-bold flex items-center gap-2 text-blue-950 dark:text-blue-200">
+                                            <BookOpen className="h-4 w-4 text-blue-600" /> Lembar Instruksi & Panduan Praktikum
+                                        </h3>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                            Sisipkan teks pengantar, tujuan praktikum, langkah kerja, atau tata tertib lab di antara modul-modul lain.
+                                        </p>
+                                    </div>
+                                    <Select onValueChange={(val) => {
+                                        const tmpl = INSTRUCTION_TEMPLATES.find(t => t.name === val);
+                                        if (tmpl) setInstructionContent(tmpl.content);
+                                    }}>
+                                        <SelectTrigger className="h-8 text-xs w-56 bg-white dark:bg-zinc-800 border-blue-200">
+                                            <Sparkles className="h-3.5 w-3.5 mr-1 text-amber-500" />
+                                            <SelectValue placeholder="Pilih Contoh Panduan..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {INSTRUCTION_TEMPLATES.map(tmpl => (
+                                                <SelectItem key={tmpl.name} value={tmpl.name}>{tmpl.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="p-3.5 rounded-lg bg-blue-100/60 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs space-y-1.5 text-slate-700 dark:text-slate-300">
+                                    <div className="font-semibold text-blue-900 dark:text-blue-200">
+                                        💡 Tips Penulisan Panduan / Markdown:
+                                    </div>
+                                    <ul className="list-disc list-inside space-y-1 text-[11px] text-muted-foreground">
+                                        <li>Gunakan <code># Judul Utama</code> atau <code>## Sub Judul</code> untuk membagi bagian panduan.</li>
+                                        <li>Gunakan tanda strip <code>-</code> atau angka <code>1.</code> untuk membuat daftar poin langkah kerja.</li>
+                                        <li>Gunakan tanda <code>&gt; Catatan</code> untuk membuat kotak informasi / peringatan penting berwarna.</li>
+                                        <li>Mendukung juga tag HTML jika Anda ingin mengatur styling khusus.</li>
+                                    </ul>
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="instruction-content-edit" className="text-xs font-semibold">Isi Teks Instruksi / Panduan Praktikum</Label>
+                                    <Textarea
+                                        name="content"
+                                        id="instruction-content-edit"
+                                        rows={14}
+                                        value={instructionContent}
+                                        onChange={(e) => setInstructionContent(e.target.value)}
+                                        className="font-mono text-xs leading-relaxed"
+                                        placeholder="Tulis instruksi langkah kerja praktikum di sini..."
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {/* ==================== 1. TIPE: HTML ==================== */}
                         {type === "HTML" && (
@@ -1011,7 +1153,20 @@ export default function EditModuleForm({ labId, module }: EditModuleFormProps) {
                             </div>
                         )}
 
-                        <div className="flex justify-end pt-4 border-t">
+                        <div className="flex items-center justify-between pt-4 border-t">
+                            <ModulePreviewModal
+                                type={type}
+                                title={title}
+                                videoUrl={videoUrl}
+                                quizQuestions={parsedQuestions}
+                                standaloneQuizQuestions={standaloneParsedList}
+                                htmlContent={htmlContent}
+                                instructionContent={instructionContent}
+                                genericContent={genericContent}
+                                isEmulator={isEmulator}
+                                romUrl={romUrl}
+                                romSystem={romSystem}
+                            />
                             <SubmitButton disabled={Boolean((type === "INTERACTIVE_VIDEO" && jsonError) || (type === "QUIZ" && standaloneQuizError))} />
                         </div>
                     </form>

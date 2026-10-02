@@ -12,11 +12,12 @@ import QuizRunner from "./quiz-runner";
 import SimulationViewer from "./simulation-viewer";
 import InteractiveVideoViewer from "./interactive-video-viewer";
 import HtmlViewer from "./html-viewer";
+import InstructionViewer from "./instruction-viewer";
 
 interface Module {
     id: string;
     title: string;
-    type: "VIDEO" | "PDF" | "QUIZ" | "SIMULATION" | "INTERACTIVE_VIDEO" | "HTML" | "SCORM" | string;
+    type: "VIDEO" | "PDF" | "QUIZ" | "SIMULATION" | "INTERACTIVE_VIDEO" | "HTML" | "SCORM" | "INSTRUCTION" | string;
     content: string; // JSON string, HTML string or URL
     completed: boolean;
 }
@@ -66,6 +67,8 @@ export default function ModuleViewer({ currentModule, allModules, labId, userId 
             case "HTML":
             case "SCORM":
                 return <HtmlViewer content={currentModule.content} title={currentModule.title} onComplete={(score) => handleComplete(score)} />;
+            case "INSTRUCTION":
+                return <InstructionViewer title={currentModule.title} content={currentModule.content} onComplete={() => handleComplete(100)} />;
             default:
                 return <div>Unsupported Module Type</div>;
         }
