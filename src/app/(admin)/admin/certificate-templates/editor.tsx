@@ -186,6 +186,16 @@ export default function TemplateEditor({ template }: { template?: any }) {
         setSelectedElementId(null);
     };
 
+    // Helper to read file as data URL fallback
+    const readFileAsDataUrl = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
     // Background Image Upload Handler
     const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -194,17 +204,35 @@ export default function TemplateEditor({ template }: { template?: any }) {
         setIsUploadingBg(true);
         const formData = new FormData();
         formData.append("file", file);
+
         try {
-            const res = await uploadCertificateAsset(formData);
-            if (res.success && res.url) {
-                setBackgroundUrl(res.url);
-            } else {
-                alert(res.message || "Gagal mengunggah background");
+            const res = await fetch("/api/upload/certificate", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.url) {
+                    setBackgroundUrl(data.url);
+                    return;
+                }
             }
+
+            // If API responded with error or not ok, fallback to client-side data URL
+            const localDataUrl = await readFileAsDataUrl(file);
+            setBackgroundUrl(localDataUrl);
         } catch (err) {
-            alert("Terjadi kesalahan saat mengunggah background");
+            console.warn("Upload fetch failed, using local Data URL fallback:", err);
+            try {
+                const localDataUrl = await readFileAsDataUrl(file);
+                setBackgroundUrl(localDataUrl);
+            } catch (fallbackErr) {
+                alert("Gagal memuat file gambar background. Pastikan file berupa gambar yang valid.");
+            }
         } finally {
             setIsUploadingBg(false);
+            if (e.target) e.target.value = "";
         }
     };
 
@@ -216,17 +244,35 @@ export default function TemplateEditor({ template }: { template?: any }) {
         setIsUploadingElement(true);
         const formData = new FormData();
         formData.append("file", file);
+
         try {
-            const res = await uploadCertificateAsset(formData);
-            if (res.success && res.url) {
-                updateSelectedElement("imageUrl", res.url);
-            } else {
-                alert(res.message || "Gagal mengunggah gambar");
+            const res = await fetch("/api/upload/certificate", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.url) {
+                    updateSelectedElement("imageUrl", data.url);
+                    return;
+                }
             }
+
+            // Fallback to client-side data URL
+            const localDataUrl = await readFileAsDataUrl(file);
+            updateSelectedElement("imageUrl", localDataUrl);
         } catch (err) {
-            alert("Terjadi kesalahan saat mengunggah gambar");
+            console.warn("Upload fetch failed, using local Data URL fallback:", err);
+            try {
+                const localDataUrl = await readFileAsDataUrl(file);
+                updateSelectedElement("imageUrl", localDataUrl);
+            } catch (fallbackErr) {
+                alert("Gagal memuat file gambar.");
+            }
         } finally {
             setIsUploadingElement(false);
+            if (e.target) e.target.value = "";
         }
     };
 

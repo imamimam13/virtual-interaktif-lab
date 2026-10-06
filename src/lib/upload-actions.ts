@@ -70,18 +70,21 @@ export async function uploadCertificateAsset(formData: FormData) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uniqueName = `cert-${randomUUID()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+    const ext = fileName.substring(fileName.lastIndexOf("."));
+    const uniqueName = `cert-${Date.now()}-${randomUUID().slice(0, 8)}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
     const uploadDir = join(process.cwd(), "public", "uploads", "certificates");
-    await mkdir(uploadDir, { recursive: true });
-
-    const filePath = join(uploadDir, uniqueName);
 
     try {
+        await mkdir(uploadDir, { recursive: true });
+        const filePath = join(uploadDir, uniqueName);
         await writeFile(filePath, buffer);
         const publicUrl = `/uploads/certificates/${uniqueName}`;
         return { success: true, url: publicUrl, message: "Gambar berhasil diunggah" };
     } catch (error) {
-        console.error("Upload error:", error);
-        return { success: false, message: "Gagal menyimpan gambar" };
+        console.warn("Upload filesystem error, fallback to data URL:", error);
+        const mimeType = file.type || (ext === ".svg" ? "image/svg+xml" : ext === ".png" ? "image/png" : "image/jpeg");
+        const base64Data = buffer.toString("base64");
+        const dataUrl = `data:${mimeType};base64,${base64Data}`;
+        return { success: true, url: dataUrl, message: "Gambar berhasil dimuat" };
     }
 }
