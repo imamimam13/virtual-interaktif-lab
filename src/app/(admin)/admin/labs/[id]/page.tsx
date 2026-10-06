@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Edit, Download, Users, FileText, Video, PlayCircle } from "lucide-react";
+import { ArrowLeft, Edit, Download, Users, FileText, Video, PlayCircle, GraduationCap } from "lucide-react";
 import ModuleViewer from "@/components/modules/module-viewer";
 
 // Helper component for generic module icon
@@ -46,7 +46,12 @@ export default async function LabDetailsPage({ params }: { params: Promise<{ id:
                         </p>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                    <Link href={`/admin/grades?labId=${lab.id}`}>
+                        <Button variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300">
+                            <GraduationCap className="mr-2 h-4 w-4" /> Nilai & Peserta ({lab._count.enrollments})
+                        </Button>
+                    </Link>
                     <Link href={`/admin/labs/${lab.id}/modules`}>
                         <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
                             Kelola Materi Modul
@@ -54,7 +59,7 @@ export default async function LabDetailsPage({ params }: { params: Promise<{ id:
                     </Link>
                     <Link href={`/api/labs/${lab.id}/export-grades`} target="_blank">
                         <Button variant="outline">
-                            <Download className="mr-2 h-4 w-4" /> Export Nilai
+                            <Download className="mr-2 h-4 w-4" /> Export CSV
                         </Button>
                     </Link>
                     <Link href={`/admin/labs/${lab.id}/edit`}>

@@ -16,7 +16,8 @@ import {
     Trophy,
     FileCode,
     CheckCircle,
-    Wallet
+    Wallet,
+    GraduationCap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -28,6 +29,7 @@ const adminSidebarItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/admin/dashboard", roles: ["ADMIN", "LECTURER"] },
     { icon: PlusCircle, label: "Buat Lab Baru", href: "/admin/labs/create", roles: ["ADMIN", "LECTURER"] },
     { icon: FlaskConical, label: "Kelola Lab", href: "/admin/labs", roles: ["ADMIN", "LECTURER"] },
+    { icon: GraduationCap, label: "Hasil & Nilai Peserta", href: "/admin/grades", roles: ["ADMIN", "LECTURER"] },
     { icon: Users, label: "Pengguna", href: "/admin/users", roles: ["ADMIN"] },
     { icon: FlaskConical, label: "Prodi / Jurusan", href: "/admin/departments", roles: ["ADMIN"] },
     { icon: Trophy, label: "Gamification", href: "/admin/gamification", roles: ["ADMIN"] },
